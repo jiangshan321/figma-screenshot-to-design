@@ -348,10 +348,16 @@ function getFormConfig() {
   var modelSel = document.getElementById('model-select');
   var modelId = modelSel.value || document.getElementById('api-model').value.trim();
   var endpoint = document.getElementById('api-endpoint').value.trim() || getEndpointForProvider(provider, modelId);
+  // Get friendly model name
+  var modelName = modelId;
+  if (modelSel.selectedOptions && modelSel.selectedOptions.length > 0) {
+    modelName = modelSel.selectedOptions[0].textContent.replace(/^[\u{1F4F7}\s]+/u, '').trim() || modelId;
+  }
   return {
     provider: provider,
     apiKey: document.getElementById('api-key').value.trim(),
     modelId: modelId,
+    modelName: modelName,
     endpoint: endpoint
   };
 }
@@ -397,6 +403,14 @@ function showModelSection(selectId) {
 function showConfigPanel() { configPanel.style.display = 'flex'; }
 function hideConfigPanel() { configPanel.style.display = 'none'; }
 
+// Auto-save config to clientStorage
+function autoSaveConfig() {
+  var cfg = getFormConfig();
+  if (!cfg.apiKey) return;
+  savedConfig = cfg;
+  parent.postMessage({ pluginMessage: { type: 'save-config', config: cfg } }, '*');
+}
+
 document.getElementById('btn-settings').addEventListener('click', showConfigPanel);
 document.getElementById('btn-close-config').addEventListener('click', hideConfigPanel);
 
@@ -432,6 +446,7 @@ async function fetchModels() {
     for (var i = 0; i < models.length; i++) { if (models[i].vision) visionCount++; }
     showTestResult('ok', '\u2705 Found ' + models.length + ' models (' + visionCount + ' with Vision)');
     addLog('Fetched ' + models.length + ' models from ' + PROVIDERS[provider].name, 'success');
+    autoSaveConfig(); // Auto-save after fetching models
   } catch (e) {
     // Show the real error
     showTestResult('err', '\u274c Model fetch failed: ' + e.message);
@@ -443,6 +458,7 @@ async function fetchModels() {
       allModels = fallback;
       renderModels(fallback, provider);
       addLog('Using preset models (may not be activated on your account)', '');
+      autoSaveConfig();
     }
 
     // Auto-open Advanced Settings so user can manually enter their model
@@ -587,6 +603,7 @@ function onModelSelect() {
   // Update advanced fields
   document.getElementById('api-model').value = modelId;
   document.getElementById('api-endpoint').value = getEndpointForProvider(provider, modelId);
+  autoSaveConfig();
 }
 
 // Manual model ID input sync
@@ -964,11 +981,11 @@ window.onmessage = function (e) {
         var sel = document.getElementById('model-select');
         var opt = document.createElement('option');
         opt.value = savedConfig.modelId;
-        opt.textContent = savedConfig.modelId;
+        opt.textContent = savedConfig.modelName || savedConfig.modelId;
         sel.appendChild(opt);
         sel.value = savedConfig.modelId;
         document.getElementById('model-section').style.display = '';
-        document.getElementById('model-info').textContent = 'Using saved: ' + savedConfig.modelId;
+        document.getElementById('model-info').textContent = 'Using: ' + (savedConfig.modelName || savedConfig.modelId);
       }
       updateButtons();
     } else {
