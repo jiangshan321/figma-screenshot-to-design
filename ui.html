@@ -177,7 +177,7 @@ details[open] summary{color:var(--accent2);margin-bottom:8px}
     </div>
 
     <!-- Advanced (collapsed, optional) -->
-    <details class="section">
+    <details class="section" id="advanced-section">
       <summary>Advanced Settings (optional)</summary>
       <div class="form-row">
         <label>Endpoint</label>
@@ -186,6 +186,11 @@ details[open] summary{color:var(--accent2);margin-bottom:8px}
       <div class="form-row">
         <label>Model ID</label>
         <input type="text" id="api-model" placeholder="Auto-filled">
+      </div>
+      <div id="ark-tip" style="font-size:10px;color:var(--orange);line-height:1.6;margin-top:4px;display:none">
+        &#9888;&#65039; &#35910;&#21253;&#29992;&#25143;&#35831;&#22312;&#28779;&#23665;&#26041;&#33493;&#25511;&#21046;&#21488;&#65306;<br>
+        1. &#24320;&#36890;&#24863;&#20852;&#36259;&#30340; Vision &#27169;&#22411;&#65292;&#25110;&#21019;&#24314;&#25512;&#29702;&#25509;&#20837;&#28857; (ep-xxx)<br>
+        2. &#23558;&#27169;&#22411;&#21517;&#31216;&#25110;&#25509;&#20837;&#28857; ID &#22635;&#20837;&#19978;&#26041; Model ID
       </div>
     </details>
 
@@ -428,17 +433,21 @@ async function fetchModels() {
     showTestResult('ok', '\u2705 Found ' + models.length + ' models (' + visionCount + ' with Vision)');
     addLog('Fetched ' + models.length + ' models from ' + PROVIDERS[provider].name, 'success');
   } catch (e) {
-    // Fallback to preset models
+    // Show the real error
+    showTestResult('err', '\u274c Model fetch failed: ' + e.message);
+    addLog('Model fetch failed: ' + e.message, 'error');
+
+    // Try fallback presets
     var fallback = FALLBACK_MODELS[provider] || [];
     if (fallback.length > 0) {
       allModels = fallback;
       renderModels(fallback, provider);
-      showTestResult('info', '\u2139\ufe0f API fetch failed, using preset models. You can manually edit in Advanced Settings.\nError: ' + e.message);
-      addLog('Using preset models for ' + provider, '');
-    } else {
-      showTestResult('err', '\u274c Fetch failed: ' + e.message + '\nPlease check API Key or manually fill Endpoint/Model ID in Advanced Settings.');
-      addLog('Model fetch failed: ' + e.message, 'error');
+      addLog('Using preset models (may not be activated on your account)', '');
     }
+
+    // Auto-open Advanced Settings so user can manually enter their model
+    document.getElementById('advanced-section').open = true;
+    document.getElementById('model-info').textContent = 'Fetch failed. Please manually enter your Model ID below (Advanced Settings).';
   }
 
   btn.disabled = false;
@@ -555,6 +564,20 @@ function onModelSelect() {
   document.getElementById('api-endpoint').value = getEndpointForProvider(provider, modelId);
 }
 
+// Manual model ID input sync
+document.getElementById('api-model').addEventListener('input', function () {
+  var provider = document.getElementById('api-provider').value;
+  var modelId = this.value.trim();
+  if (modelId) {
+    document.getElementById('api-endpoint').value = getEndpointForProvider(provider, modelId);
+    // Also try to select in dropdown
+    var sel = document.getElementById('model-select');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === modelId) { sel.selectedIndex = i; break; }
+    }
+  }
+});
+
 document.getElementById('btn-fetch').addEventListener('click', fetchModels);
 document.getElementById('model-select').addEventListener('change', onModelSelect);
 
@@ -566,6 +589,8 @@ document.getElementById('api-provider').addEventListener('change', function () {
   document.getElementById('api-model').value = '';
   document.getElementById('test-result').style.display = 'none';
   allModels = [];
+  // Show Ark tip for doubao
+  document.getElementById('ark-tip').style.display = this.value === 'doubao' ? '' : 'none';
 });
 
 // ==================== TEST CONNECTION ====================
