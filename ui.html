@@ -10,46 +10,39 @@
   --accent:#cba6f7;--accent2:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--orange:#fab387;
   --border:#313244;
 }
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:12px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:12px;height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
 
-/* Header */
-.header{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.header{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .header h1{font-size:14px;font-weight:600;color:var(--accent)}
 .header-right{display:flex;align-items:center;gap:8px}
-.icon-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px;border-radius:4px;color:var(--text2);transition:all .15s}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:4px;color:var(--text2);transition:all .15s}
 .icon-btn:hover{background:var(--bg3);color:var(--accent)}
 
-/* Buttons */
 button{padding:6px 14px;border:none;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
 button:active{transform:scale(.96)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-p{background:var(--accent);color:#1e1e2e}
 .btn-p:hover{background:#b4befe}
 .btn-s{background:var(--bg3);color:var(--text)}
 .btn-s:hover{background:var(--bg4)}
 .btn-g{background:var(--green);color:#1e1e2e}
 .btn-g:hover{background:#94e2d5}
-.btn-r{background:var(--red);color:#1e1e2e}
 .btn-test{background:var(--accent2);color:#1e1e2e}
 .btn-test:hover{background:#74c7ec}
 .btn-full{width:100%}
 .btn-row{display:flex;gap:8px}
 
-/* Content */
 .content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-
-/* Section */
 .section{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px}
-.section-title{font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-title{font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:8px}
 
-/* Input */
 input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:11px;outline:none;width:100%}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input:focus,select:focus{border-color:var(--accent)}
 label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
 .form-row{margin-bottom:8px}
 .form-row:last-child{margin-bottom:0}
 
-/* Drop zone */
 .dropzone{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 .dropzone:hover{border-color:var(--accent);background:rgba(203,166,247,.05)}
 .dropzone.has-image{border-color:var(--green);padding:8px}
@@ -57,7 +50,6 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
 .dropzone-icon{font-size:24px}
 .dropzone-text{font-size:11px;color:var(--text3)}
 
-/* Match table */
 .match-table{width:100%;border-collapse:collapse;font-size:10px}
 .match-table th{text-align:left;padding:4px 6px;background:var(--bg3);color:var(--text2);font-weight:500;border-bottom:1px solid var(--border)}
 .match-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
@@ -66,49 +58,45 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
 .tag-style{background:rgba(137,180,250,.15);color:var(--accent2)}
 .tag-fallback{background:rgba(243,139,168,.15);color:var(--red)}
 
-/* Status */
 .status{padding:4px 10px;font-size:10px;color:var(--text3);border-radius:4px}
 .status.ok{color:var(--green)}
 .status.err{color:var(--red)}
 .status.loading{color:var(--orange)}
 
-/* Log */
 .log{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;font-family:'SF Mono',monospace;font-size:10px;max-height:150px;overflow-y:auto;color:var(--text3);line-height:1.5}
 .log-line{margin-bottom:2px}
 
-/* Action bar */
-.action-bar{padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.action-bar{padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-shrink:0}
 .action-bar .spacer{flex:1}
 
-/* Config panel (overlay) */
+/* Config overlay */
 .config-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:100;display:flex;flex-direction:column}
-.config-overlay .config-header{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.config-overlay .config-header h2{font-size:14px;font-weight:600;color:var(--accent2)}
-.config-overlay .config-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.config-overlay .config-footer{padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.config-header{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.config-header h2{font-size:14px;font-weight:600;color:var(--accent2)}
+.config-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
 
-/* Progress bar */
-.progress-bar{width:100%;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:6px}
-.progress-bar .fill{height:100%;background:var(--accent2);border-radius:2px;transition:width .3s}
-
-/* Test result */
-.test-result{padding:8px 12px;border-radius:6px;font-size:11px;margin-top:8px;display:none}
+/* Test/result */
+.test-result{padding:8px 12px;border-radius:6px;font-size:11px;margin-top:8px;display:none;line-height:1.5}
 .test-result.ok{display:block;background:rgba(166,227,161,.1);border:1px solid rgba(166,227,161,.3);color:var(--green)}
 .test-result.err{display:block;background:rgba(243,139,168,.1);border:1px solid rgba(243,139,168,.3);color:var(--red)}
+.test-result.info{display:block;background:rgba(137,180,250,.1);border:1px solid rgba(137,180,250,.3);color:var(--accent2)}
 
-/* Setup page */
-.setup-welcome{text-align:center;padding:32px 16px}
-.setup-welcome h2{font-size:16px;color:var(--accent);margin-bottom:8px}
-.setup-welcome p{font-size:11px;color:var(--text3);line-height:1.6}
-.setup-steps{display:flex;align-items:center;justify-content:center;gap:6px;margin:16px 0}
-.step-dot{width:8px;height:8px;border-radius:50%;background:var(--bg4)}
-.step-dot.active{background:var(--accent)}
-.step-dot.done{background:var(--green)}
+/* Advanced toggle */
+details.section{cursor:default}
+details summary{cursor:pointer;font-size:11px;font-weight:600;color:var(--text3);list-style:none;user-select:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'\25b8 ';color:var(--text3)}
+details[open] summary::before{content:'\25be '}
+details[open] summary{color:var(--accent2);margin-bottom:8px}
+
+/* Spinner */
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--bg4);border-top-color:var(--accent2);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- Main Header -->
+<!-- ===== Main Header ===== -->
 <div class="header">
   <h1>Screenshot to Design</h1>
   <div class="header-right">
@@ -117,16 +105,13 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
   </div>
 </div>
 
-<!-- Main Content -->
+<!-- ===== Main Content ===== -->
 <div class="content" id="main-content">
-  <!-- Design System -->
   <div class="section">
     <div class="section-title">&#128230; Design System</div>
     <button class="btn-s btn-full" id="btn-scan" style="margin-bottom:8px">Scan Current File</button>
     <div id="ds-info" style="font-size:10px;color:var(--text3)">Click to scan components, styles, and tokens</div>
   </div>
-
-  <!-- Screenshot -->
   <div class="section">
     <div class="section-title">&#128247; Screenshot</div>
     <div class="dropzone" id="dropzone">
@@ -135,14 +120,10 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
     </div>
     <input type="file" id="file-input" accept="image/*" style="display:none">
   </div>
-
-  <!-- Analysis Log -->
   <div class="section" id="log-section" style="display:none">
     <div class="section-title">&#128220; Analysis Log</div>
     <div class="log" id="log"></div>
   </div>
-
-  <!-- Match Preview -->
   <div class="section" id="preview-section" style="display:none">
     <div class="section-title">&#127919; Match Results</div>
     <table class="match-table">
@@ -152,7 +133,7 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
   </div>
 </div>
 
-<!-- Action bar -->
+<!-- ===== Action Bar ===== -->
 <div class="action-bar">
   <button class="btn-s" id="btn-analyze" disabled>&#128270; Analyze</button>
   <button class="btn-g" id="btn-generate" disabled>&#9889; Generate Page</button>
@@ -160,63 +141,162 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
   <div id="action-status" class="status"></div>
 </div>
 
-<!-- Config Overlay Panel -->
+<!-- ===== Config Overlay ===== -->
 <div class="config-overlay" id="config-panel" style="display:none">
   <div class="config-header">
     <h2>&#9881; API Settings</h2>
     <button class="icon-btn" id="btn-close-config">&#10005;</button>
   </div>
   <div class="config-body">
+    <!-- Step 1: Provider -->
     <div class="section">
       <div class="section-title">&#127760; AI Provider</div>
-      <div class="form-row">
-        <label>Provider</label>
-        <select id="api-provider">
-          <option value="doubao">豆包 Doubao (字节火山引擎)</option>
-          <option value="anthropic">Claude (Anthropic)</option>
-          <option value="openai">GPT-4o (OpenAI)</option>
-          <option value="qwen">通义千问 Qwen (阿里)</option>
-          <option value="deepseek">DeepSeek</option>
-          <option value="gemini">Gemini (Google)</option>
-          <option value="moonshot">Kimi / Moonshot (月之暗面)</option>
-        </select>
-      </div>
+      <select id="api-provider">
+        <option value="doubao">豆包 Doubao (字节火山引擎)</option>
+        <option value="anthropic">Claude (Anthropic)</option>
+        <option value="openai">GPT-4o (OpenAI)</option>
+        <option value="qwen">通义千问 Qwen (阿里)</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="gemini">Gemini (Google)</option>
+        <option value="moonshot">Kimi / Moonshot (月之暗面)</option>
+      </select>
+    </div>
+
+    <!-- Step 2: API Key (the ONLY required input) -->
+    <div class="section">
+      <div class="section-title">&#128273; API Key</div>
+      <input type="password" id="api-key" placeholder="Enter your API Key">
+      <button class="btn-test btn-full" id="btn-fetch" style="margin-top:8px">&#128269; Fetch Available Models</button>
+    </div>
+
+    <!-- Step 3: Model Selection (appears after fetch) -->
+    <div class="section" id="model-section" style="display:none">
+      <div class="section-title">&#129302; Model</div>
+      <select id="model-select"></select>
+      <div id="model-info" style="font-size:10px;color:var(--text3);margin-top:4px"></div>
+    </div>
+
+    <!-- Advanced (collapsed, optional) -->
+    <details class="section">
+      <summary>Advanced Settings (optional)</summary>
       <div class="form-row">
         <label>Endpoint</label>
-        <input type="text" id="api-endpoint" placeholder="豆包: https://ark.cn-beijing.volces.com/api/v3/chat/completions">
+        <input type="text" id="api-endpoint" placeholder="Auto-filled">
       </div>
       <div class="form-row">
         <label>Model ID</label>
-        <input type="text" id="api-model" placeholder="豆包: doubao-1-5-vision-pro-32k-250115">
+        <input type="text" id="api-model" placeholder="Auto-filled">
       </div>
-      <div class="form-row">
-        <label>API Key</label>
-        <input type="password" id="api-key" placeholder="Your API Key">
-      </div>
-      <div class="btn-row" style="margin-top:8px">
-        <button class="btn-test" id="btn-test-conn" style="flex:1">&#128274; Test Connection</button>
-        <button class="btn-p" id="btn-save-config" style="flex:1">&#128190; Save Config</button>
-      </div>
-      <div class="test-result" id="test-result"></div>
-    </div>
+    </details>
 
-    <div class="section" style="font-size:10px;color:var(--text3);line-height:1.6">
-      <div class="section-title">&#128161; Tips</div>
-      <div>- 豆包用户需填写火山引擎的 Endpoint 和 Model ID</div>
-      <div>- 其他平台会自动填充默认值</div>
-      <div>- 测试连通后会自动生成一个默认登录页验证效果</div>
-      <div>- 配置保存在本地，关闭插件不会丢失</div>
+    <!-- Actions -->
+    <div class="btn-row">
+      <button class="btn-test" id="btn-test-conn" style="flex:1">&#128274; Test Connection</button>
+      <button class="btn-p" id="btn-save-config" style="flex:1">&#128190; Save & Close</button>
     </div>
+    <div class="test-result" id="test-result"></div>
   </div>
 </div>
 
 <script>
+// ==================== PROVIDER CONFIG ====================
+var PROVIDERS = {
+  doubao: {
+    name: '豆包 Doubao',
+    modelsUrl: 'https://ark.cn-beijing.volces.com/api/v3/models',
+    chatEndpoint: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+    format: 'openai',
+    visionKeywords: ['vision', 'vl', 'visual']
+  },
+  anthropic: {
+    name: 'Claude',
+    modelsUrl: 'https://api.anthropic.com/v1/models',
+    chatEndpoint: 'https://api.anthropic.com/v1/messages',
+    format: 'anthropic',
+    visionKeywords: ['claude']
+  },
+  openai: {
+    name: 'GPT-4o',
+    modelsUrl: 'https://api.openai.com/v1/models',
+    chatEndpoint: 'https://api.openai.com/v1/chat/completions',
+    format: 'openai',
+    visionKeywords: ['gpt-4o', 'gpt-4-turbo', 'o1', 'o3', 'o4']
+  },
+  qwen: {
+    name: '通义千问',
+    modelsUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/models',
+    chatEndpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    format: 'openai',
+    visionKeywords: ['vl', 'vision', 'qwen-vl']
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    modelsUrl: 'https://api.deepseek.com/models',
+    chatEndpoint: 'https://api.deepseek.com/chat/completions',
+    format: 'openai',
+    visionKeywords: ['vl', 'vision']
+  },
+  gemini: {
+    name: 'Gemini',
+    modelsUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
+    chatEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/',
+    format: 'gemini',
+    visionKeywords: ['gemini']
+  },
+  moonshot: {
+    name: 'Kimi',
+    modelsUrl: 'https://api.moonshot.cn/v1/models',
+    chatEndpoint: 'https://api.moonshot.cn/v1/chat/completions',
+    format: 'openai',
+    visionKeywords: []
+  }
+};
+
+var FALLBACK_MODELS = {
+  anthropic: [
+    { id: 'claude-sonnet-4-20250514', vision: true },
+    { id: 'claude-3-5-sonnet-20241022', vision: true },
+    { id: 'claude-3-5-haiku-20241022', vision: true }
+  ],
+  openai: [
+    { id: 'gpt-4o', vision: true },
+    { id: 'gpt-4o-mini', vision: true },
+    { id: 'gpt-4-turbo', vision: true }
+  ],
+  doubao: [
+    { id: 'doubao-1-5-vision-pro-32k-250115', vision: true },
+    { id: 'doubao-1-5-pro-32k-250115', vision: false },
+    { id: 'doubao-pro-32k-241215', vision: false },
+    { id: 'doubao-lite-32k-241215', vision: false }
+  ],
+  qwen: [
+    { id: 'qwen-vl-max', vision: true },
+    { id: 'qwen-vl-plus', vision: true },
+    { id: 'qwen-max', vision: false }
+  ],
+  deepseek: [
+    { id: 'deepseek-chat', vision: false },
+    { id: 'deepseek-reasoner', vision: false }
+  ],
+  gemini: [
+    { id: 'gemini-2.0-flash', vision: true },
+    { id: 'gemini-1.5-pro', vision: true },
+    { id: 'gemini-1.5-flash', vision: true }
+  ],
+  moonshot: [
+    { id: 'moonshot-v1-8k', vision: false },
+    { id: 'moonshot-v1-32k', vision: false }
+  ]
+};
+
 // ==================== STATE ====================
 var designSystemData = null;
 var screenshotBase64 = null;
 var analysisResult = null;
 var savedConfig = null;
+var allModels = [];
 
+// ==================== DOM REFS ====================
 var logEl = document.getElementById('log');
 var dsStatus = document.getElementById('ds-status');
 var actionStatus = document.getElementById('action-status');
@@ -224,23 +304,13 @@ var logSection = document.getElementById('log-section');
 var previewSection = document.getElementById('preview-section');
 var configPanel = document.getElementById('config-panel');
 
-// ==================== PROVIDERS ====================
-var PROVIDERS = {
-  anthropic:  { endpoint: 'https://api.anthropic.com/v1/messages', model: 'claude-sonnet-4-20250514', format: 'anthropic' },
-  openai:     { endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o', format: 'openai' },
-  doubao:     { endpoint: '', model: '', format: 'openai' },
-  qwen:       { endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model: 'qwen-vl-max', format: 'openai' },
-  deepseek:   { endpoint: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat', format: 'openai' },
-  gemini:     { endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', model: 'gemini-2.0-flash', format: 'gemini' },
-  moonshot:   { endpoint: 'https://api.moonshot.cn/v1/chat/completions', model: 'moonshot-v1-8k', format: 'openai' },
-};
-
-// ==================== LOG ====================
+// ==================== UTILITIES ====================
 function addLog(msg, type) {
   logSection.style.display = '';
   var line = document.createElement('div');
   line.className = 'log-line';
-  line.textContent = (type === 'error' ? '\u274c ' : type === 'success' ? '\u2705 ' : '\u23f3 ') + msg;
+  var prefix = type === 'error' ? '\u274c ' : type === 'success' ? '\u2705 ' : '\u23f3 ';
+  line.textContent = prefix + msg;
   logEl.appendChild(line);
   logEl.scrollTop = logEl.scrollHeight;
 }
@@ -250,116 +320,288 @@ function setAction(msg, type) {
   actionStatus.className = 'status ' + (type || '');
 }
 
-// ==================== CONFIG ====================
-function getFormConfig() {
-  return {
-    provider: document.getElementById('api-provider').value,
-    endpoint: document.getElementById('api-endpoint').value.trim(),
-    model: document.getElementById('api-model').value.trim(),
-    apiKey: document.getElementById('api-key').value.trim()
-  };
-}
-
-function fillFormConfig(cfg) {
-  if (!cfg) return;
-  if (cfg.provider) document.getElementById('api-provider').value = cfg.provider;
-  if (cfg.endpoint) document.getElementById('api-endpoint').value = cfg.endpoint;
-  if (cfg.model) document.getElementById('api-model').value = cfg.model;
-  if (cfg.apiKey) document.getElementById('api-key').value = cfg.apiKey;
-}
-
-function showConfigPanel() {
-  configPanel.style.display = 'flex';
-}
-
-function hideConfigPanel() {
-  configPanel.style.display = 'none';
-}
-
-// Settings button
-document.getElementById('btn-settings').addEventListener('click', showConfigPanel);
-document.getElementById('btn-close-config').addEventListener('click', hideConfigPanel);
-
-// Save config
-document.getElementById('btn-save-config').addEventListener('click', function () {
-  var cfg = getFormConfig();
-  if (!cfg.apiKey) {
-    showTestResult('err', 'Please enter API Key');
-    return;
-  }
-  parent.postMessage({ pluginMessage: { type: 'save-config', config: cfg } }, '*');
-  savedConfig = cfg;
-  showTestResult('ok', 'Config saved!');
-  updateButtons();
-  // Auto close after brief delay
-  setTimeout(function () { hideConfigPanel(); }, 800);
-});
-
-// Provider change - auto-fill defaults
-document.getElementById('api-provider').addEventListener('change', function () {
-  var p = this.value;
-  var cfg = PROVIDERS[p];
-  if (cfg) {
-    document.getElementById('api-endpoint').value = cfg.endpoint || '';
-    document.getElementById('api-model').value = cfg.model || '';
-    // Show hint for providers that require manual input
-    if (!cfg.endpoint || !cfg.model) {
-      showTestResult('ok', '\u2139\ufe0f ' + p + ' \u9700\u8981\u624b\u52a8\u586b\u5199 Endpoint \u548c Model ID');
-    } else {
-      document.getElementById('test-result').style.display = 'none';
-    }
-  }
-});
-
-// ==================== TEST CONNECTION ====================
-document.getElementById('btn-test-conn').addEventListener('click', async function () {
-  var cfg = getFormConfig();
-  if (!cfg.apiKey) { showTestResult('err', 'Please enter API Key'); return; }
-
-  var provider = cfg.provider;
-  var apiKey = cfg.apiKey;
-  var endpoint = cfg.endpoint || PROVIDERS[provider].endpoint;
-  var model = cfg.model || PROVIDERS[provider].model;
-
-  if (!endpoint) { showTestResult('err', '\u274c Endpoint is required. \u8c46\u5305\u7528\u6237\u8bf7\u586b\u5199\u706b\u5c71\u5f15\u64ce Endpoint\uff0c\u5982 https://ark.cn-beijing.volces.com/api/v3/chat/completions'); return; }
-  if (!model) { showTestResult('err', '\u274c Model ID is required. \u8c46\u5305\u7528\u6237\u8bf7\u586b\u5199\u6a21\u578b ID\uff0c\u5982 doubao-1-5-vision-pro-32k-250115'); return; }
-
-  var btn = document.getElementById('btn-test-conn');
-  btn.disabled = true;
-  btn.textContent = '\u23f3 Testing...';
-  showTestResult('ok', 'Connecting to ' + provider + '...');
-
-  try {
-    var testPrompt = 'Respond with exactly: {"status":"ok","message":"connected"}';
-    var testResult = await callAI(provider, apiKey, endpoint, model, null, testPrompt);
-    showTestResult('ok', '\u2705 Connection successful! Model: ' + model);
-    addLog('API test passed: ' + provider + ' / ' + model, 'success');
-
-    // Save config on successful test
-    parent.postMessage({ pluginMessage: { type: 'save-config', config: cfg } }, '*');
-    savedConfig = cfg;
-
-    // Auto-generate default login page to validate
-    addLog('Generating default login page for validation...', '');
-    parent.postMessage({ pluginMessage: { type: 'generate-default-login' } }, '*');
-
-    updateButtons();
-    setTimeout(function () { hideConfigPanel(); }, 1200);
-  } catch (e) {
-    showTestResult('err', '\u274c Failed: ' + e.message);
-    addLog('API test failed: ' + e.message, 'error');
-  }
-
-  btn.disabled = false;
-  btn.textContent = '\u128274 Test Connection';
-});
-
 function showTestResult(type, msg) {
   var el = document.getElementById('test-result');
   el.className = 'test-result ' + type;
   el.textContent = msg;
   el.style.display = 'block';
 }
+
+function isVisionModel(modelId, provider) {
+  var lower = modelId.toLowerCase();
+  var kw = PROVIDERS[provider].visionKeywords || [];
+  for (var i = 0; i < kw.length; i++) {
+    if (lower.indexOf(kw[i].toLowerCase()) >= 0) return true;
+  }
+  if (lower.indexOf('vision') >= 0 || lower.indexOf('vl-') >= 0) return true;
+  return false;
+}
+
+// ==================== CONFIG ====================
+function getFormConfig() {
+  var provider = document.getElementById('api-provider').value;
+  var modelSel = document.getElementById('model-select');
+  var modelId = modelSel.value || document.getElementById('api-model').value.trim();
+  var endpoint = document.getElementById('api-endpoint').value.trim() || getEndpointForProvider(provider, modelId);
+  return {
+    provider: provider,
+    apiKey: document.getElementById('api-key').value.trim(),
+    modelId: modelId,
+    endpoint: endpoint
+  };
+}
+
+function getEndpointForProvider(provider, modelId) {
+  var cfg = PROVIDERS[provider];
+  if (provider === 'gemini' && modelId) {
+    return cfg.chatEndpoint + modelId + ':generateContent';
+  }
+  return cfg.chatEndpoint;
+}
+
+function fillFormConfig(cfg) {
+  if (!cfg) return;
+  if (cfg.provider) document.getElementById('api-provider').value = cfg.provider;
+  if (cfg.apiKey) document.getElementById('api-key').value = cfg.apiKey;
+  if (cfg.modelId) {
+    document.getElementById('api-model').value = cfg.modelId;
+  }
+  if (cfg.endpoint) {
+    document.getElementById('api-endpoint').value = cfg.endpoint;
+  }
+  // If we have saved config with model, show model section and try to select
+  if (cfg.modelId && cfg.apiKey) {
+    showModelSection(cfg.modelId);
+  }
+}
+
+function showModelSection(selectId) {
+  var section = document.getElementById('model-section');
+  section.style.display = '';
+  if (selectId) {
+    var sel = document.getElementById('model-select');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === selectId) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+}
+
+function showConfigPanel() { configPanel.style.display = 'flex'; }
+function hideConfigPanel() { configPanel.style.display = 'none'; }
+
+document.getElementById('btn-settings').addEventListener('click', showConfigPanel);
+document.getElementById('btn-close-config').addEventListener('click', hideConfigPanel);
+
+// Save config
+document.getElementById('btn-save-config').addEventListener('click', function () {
+  var cfg = getFormConfig();
+  if (!cfg.apiKey) { showTestResult('err', '\u274c Please enter API Key'); return; }
+  if (!cfg.modelId) { showTestResult('err', '\u274c Please select a model (click Fetch Available Models)'); return; }
+  parent.postMessage({ pluginMessage: { type: 'save-config', config: cfg } }, '*');
+  savedConfig = cfg;
+  showTestResult('ok', '\u2705 Config saved!');
+  updateButtons();
+  setTimeout(function () { hideConfigPanel(); }, 600);
+});
+
+// ==================== MODEL FETCHING ====================
+async function fetchModels() {
+  var provider = document.getElementById('api-provider').value;
+  var apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) { showTestResult('err', '\u274c Please enter API Key first'); return; }
+
+  var btn = document.getElementById('btn-fetch');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Fetching...';
+  showTestResult('info', 'Connecting to ' + PROVIDERS[provider].name + '...');
+
+  try {
+    var models = await doFetchModels(provider, apiKey);
+    allModels = models;
+    renderModels(models, provider);
+
+    var visionCount = 0;
+    for (var i = 0; i < models.length; i++) { if (models[i].vision) visionCount++; }
+    showTestResult('ok', '\u2705 Found ' + models.length + ' models (' + visionCount + ' with Vision)');
+    addLog('Fetched ' + models.length + ' models from ' + PROVIDERS[provider].name, 'success');
+  } catch (e) {
+    // Fallback to preset models
+    var fallback = FALLBACK_MODELS[provider] || [];
+    if (fallback.length > 0) {
+      allModels = fallback;
+      renderModels(fallback, provider);
+      showTestResult('info', '\u2139\ufe0f API fetch failed, using preset models. You can manually edit in Advanced Settings.\nError: ' + e.message);
+      addLog('Using preset models for ' + provider, '');
+    } else {
+      showTestResult('err', '\u274c Fetch failed: ' + e.message + '\nPlease check API Key or manually fill Endpoint/Model ID in Advanced Settings.');
+      addLog('Model fetch failed: ' + e.message, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '\u128269 Fetch Available Models';
+}
+
+async function doFetchModels(provider, apiKey) {
+  var cfg = PROVIDERS[provider];
+
+  if (cfg.format === 'gemini') {
+    var resp = await fetch(cfg.modelsUrl + '?key=' + apiKey);
+    var data = await resp.json();
+    if (data.error) throw new Error(JSON.stringify(data.error));
+    var models = [];
+    var list = data.models || [];
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i];
+      var id = m.name ? m.name.replace('models/', '') : '';
+      // Only include models that support generateContent
+      if (id && m.supportedGenerationMethods && m.supportedGenerationMethods.indexOf('generateContent') >= 0) {
+        models.push({ id: id, vision: isVisionModel(id, provider) });
+      }
+    }
+    return models;
+  }
+
+  if (cfg.format === 'anthropic') {
+    var resp = await fetch(cfg.modelsUrl, {
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }
+    });
+    var data = await resp.json();
+    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+    var models = [];
+    var list = data.data || [];
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i];
+      var id = m.id || '';
+      if (id) models.push({ id: id, vision: isVisionModel(id, provider) });
+    }
+    return models;
+  }
+
+  // OpenAI-compatible: doubao, openai, qwen, deepseek, moonshot
+  var resp = await fetch(cfg.modelsUrl, {
+    headers: { 'Authorization': 'Bearer ' + apiKey }
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+  var models = [];
+  var list = data.data || [];
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i];
+    var id = m.id || '';
+    if (id) models.push({ id: id, vision: isVisionModel(id, provider) });
+  }
+  return models;
+}
+
+function renderModels(models, provider) {
+  var section = document.getElementById('model-section');
+  var sel = document.getElementById('model-select');
+  var info = document.getElementById('model-info');
+
+  sel.innerHTML = '';
+
+  // Sort: vision models first
+  var vision = [], text = [];
+  for (var i = 0; i < models.length; i++) {
+    if (models[i].vision) vision.push(models[i]);
+    else text.push(models[i]);
+  }
+
+  if (vision.length > 0) {
+    var optGroup = document.createElement('optgroup');
+    optGroup.label = '\u{1F4F7} Vision Models (Recommended)';
+    for (var j = 0; j < vision.length; j++) {
+      var opt = document.createElement('option');
+      opt.value = vision[j].id;
+      opt.textContent = '\u{1F4F7} ' + vision[j].id;
+      optGroup.appendChild(opt);
+    }
+    sel.appendChild(optGroup);
+  }
+
+  if (text.length > 0) {
+    var optGroup2 = document.createElement('optgroup');
+    optGroup2.label = '\u{1F4DD} Text Models';
+    for (var k = 0; k < text.length; k++) {
+      var opt2 = document.createElement('option');
+      opt2.value = text[k].id;
+      opt2.textContent = '   ' + text[k].id;
+      optGroup2.appendChild(opt2);
+    }
+    sel.appendChild(optGroup2);
+  }
+
+  // Auto-select first vision model
+  if (vision.length > 0) {
+    sel.value = vision[0].id;
+    onModelSelect();
+  }
+
+  info.textContent = models.length + ' models (' + vision.length + ' Vision)';
+  section.style.display = '';
+}
+
+function onModelSelect() {
+  var provider = document.getElementById('api-provider').value;
+  var modelId = document.getElementById('model-select').value;
+  if (!modelId) return;
+
+  // Update advanced fields
+  document.getElementById('api-model').value = modelId;
+  document.getElementById('api-endpoint').value = getEndpointForProvider(provider, modelId);
+}
+
+document.getElementById('btn-fetch').addEventListener('click', fetchModels);
+document.getElementById('model-select').addEventListener('change', onModelSelect);
+
+// Provider change - reset model section, keep API key
+document.getElementById('api-provider').addEventListener('change', function () {
+  document.getElementById('model-section').style.display = 'none';
+  document.getElementById('model-select').innerHTML = '';
+  document.getElementById('api-endpoint').value = '';
+  document.getElementById('api-model').value = '';
+  document.getElementById('test-result').style.display = 'none';
+  allModels = [];
+});
+
+// ==================== TEST CONNECTION ====================
+document.getElementById('btn-test-conn').addEventListener('click', async function () {
+  var cfg = getFormConfig();
+  if (!cfg.apiKey) { showTestResult('err', '\u274c Please enter API Key'); return; }
+  if (!cfg.modelId) { showTestResult('err', '\u274c Please select a model first'); return; }
+
+  var btn = document.getElementById('btn-test-conn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Testing...';
+  showTestResult('info', 'Testing connection to ' + cfg.modelId + '...');
+
+  try {
+    await callAI(cfg, null, 'Respond with exactly one word: OK');
+    showTestResult('ok', '\u2705 Connection successful! Model: ' + cfg.modelId);
+    addLog('API test passed: ' + cfg.provider + ' / ' + cfg.modelId, 'success');
+
+    // Save config on success
+    parent.postMessage({ pluginMessage: { type: 'save-config', config: cfg } }, '*');
+    savedConfig = cfg;
+
+    // Auto-generate default login page
+    addLog('Generating default login page...', '');
+    parent.postMessage({ pluginMessage: { type: 'generate-default-login' } }, '*');
+
+    updateButtons();
+    setTimeout(function () { hideConfigPanel(); }, 1500);
+  } catch (e) {
+    showTestResult('err', '\u274c Connection failed: ' + e.message);
+    addLog('API test failed: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '\u128274 Test Connection';
+});
 
 // ==================== SCAN DESIGN SYSTEM ====================
 document.getElementById('btn-scan').addEventListener('click', function () {
@@ -377,20 +619,14 @@ dropzone.addEventListener('click', function () { fileInput.click(); });
 dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.style.borderColor = 'var(--accent)'; });
 dropzone.addEventListener('dragleave', function () { dropzone.style.borderColor = ''; });
 dropzone.addEventListener('drop', function (e) {
-  e.preventDefault();
-  dropzone.style.borderColor = '';
+  e.preventDefault(); dropzone.style.borderColor = '';
   if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', function () { if (fileInput.files.length > 0) handleFile(fileInput.files[0]); });
-
-// Paste support
 document.addEventListener('paste', function (e) {
   var items = e.clipboardData.items;
   for (var i = 0; i < items.length; i++) {
-    if (items[i].type.startsWith('image/')) {
-      handleFile(items[i].getAsFile());
-      break;
-    }
+    if (items[i].type.startsWith('image/')) { handleFile(items[i].getAsFile()); break; }
   }
 });
 
@@ -409,23 +645,21 @@ function handleFile(file) {
 }
 
 function updateButtons() {
-  document.getElementById('btn-analyze').disabled = !(screenshotBase64 && designSystemData && savedConfig && savedConfig.apiKey);
+  document.getElementById('btn-analyze').disabled = !(screenshotBase64 && designSystemData && savedConfig && savedConfig.apiKey && savedConfig.modelId);
 }
 
 // ==================== ANALYZE ====================
 document.getElementById('btn-analyze').addEventListener('click', async function () {
   var cfg = savedConfig || getFormConfig();
-  if (!cfg.apiKey) { setAction('Please configure API settings first', 'err'); return; }
+  if (!cfg.apiKey || !cfg.modelId) { setAction('Please configure API first', 'err'); return; }
   if (!screenshotBase64) { setAction('Please upload screenshot', 'err'); return; }
   if (!designSystemData) { setAction('Please scan design system first', 'err'); return; }
 
   setAction('Analyzing...', 'loading');
-  addLog('Sending screenshot + design system to ' + cfg.provider + '...');
+  addLog('Sending screenshot + design system to ' + cfg.modelId + '...');
 
   try {
-    var endpoint = cfg.endpoint || PROVIDERS[cfg.provider].endpoint;
-    var model = cfg.model || PROVIDERS[cfg.provider].model;
-    var result = await callAI(cfg.provider, cfg.apiKey, endpoint, model, screenshotBase64, designSystemData);
+    var result = await callAI(cfg, screenshotBase64, designSystemData);
     analysisResult = result;
     addLog('Analysis complete: ' + result.items.length + ' elements found', 'success');
     renderMatchPreview(result.items);
@@ -444,7 +678,7 @@ document.getElementById('btn-generate').addEventListener('click', function () {
   parent.postMessage({ pluginMessage: { type: 'generate-page', elements: analysisResult } }, '*');
 });
 
-// ==================== AI CALLS ====================
+// ==================== AI API CALLS ====================
 function buildPrompt(ds) {
   var lines = [
     'You are a UI design assistant. Analyze the attached screenshot and map each UI element to the closest matching component from the design system catalog below.',
@@ -476,15 +710,13 @@ function buildPrompt(ds) {
   if (ds.paintStyles && ds.paintStyles.length > 0) {
     lines.push('### Color Styles:');
     for (var k = 0; k < Math.min(ds.paintStyles.length, 30); k++) {
-      var ps = ds.paintStyles[k];
-      lines.push('- "' + ps.name + '": ' + ps.hex);
+      lines.push('- "' + ds.paintStyles[k].name + '": ' + ds.paintStyles[k].hex);
     }
   }
   if (ds.textStyles && ds.textStyles.length > 0) {
     lines.push('### Text Styles:');
     for (var m = 0; m < Math.min(ds.textStyles.length, 20); m++) {
-      var ts = ds.textStyles[m];
-      lines.push('- "' + ts.name + '": ' + ts.fontSize + 'px ' + ts.fontFamily);
+      lines.push('- "' + ds.textStyles[m].name + '": ' + ds.textStyles[m].fontSize + 'px ' + ds.textStyles[m].fontFamily);
     }
   }
   lines.push('');
@@ -519,31 +751,29 @@ function buildPrompt(ds) {
   return lines.join('\n');
 }
 
-async function callAI(provider, apiKey, customEndpoint, customModel, imageBase64, dsOrPrompt) {
-  var cfg = PROVIDERS[provider];
-  if (!cfg) throw new Error('Unknown provider: ' + provider);
+async function callAI(config, imageBase64, dsOrPrompt) {
+  var provider = config.provider;
+  var pCfg = PROVIDERS[provider];
+  if (!pCfg) throw new Error('Unknown provider: ' + provider);
 
-  var endpoint = customEndpoint || cfg.endpoint;
-  var model = customModel || cfg.model;
-  if (!endpoint) throw new Error('Please fill Endpoint');
-  if (!model) throw new Error('Please fill Model ID');
+  var endpoint = config.endpoint || getEndpointForProvider(provider, config.modelId);
+  var model = config.modelId;
+  if (!endpoint) throw new Error('Endpoint not configured');
+  if (!model) throw new Error('Model not selected');
 
-  // Support both: ds object (for full analysis) or plain string (for test)
-  var prompt, dsData;
+  var prompt;
   if (typeof dsOrPrompt === 'string') {
     prompt = dsOrPrompt;
-    dsData = null;
   } else {
     prompt = buildPrompt(dsOrPrompt);
-    dsData = dsOrPrompt;
   }
 
-  if (cfg.format === 'anthropic') {
-    return await callAnthropic(endpoint, apiKey, model, prompt, imageBase64);
-  } else if (cfg.format === 'gemini') {
-    return await callGemini(endpoint, apiKey, model, prompt, imageBase64);
+  if (pCfg.format === 'anthropic') {
+    return await callAnthropic(endpoint, config.apiKey, model, prompt, imageBase64);
+  } else if (pCfg.format === 'gemini') {
+    return await callGemini(endpoint, config.apiKey, model, prompt, imageBase64);
   } else {
-    return await callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64);
+    return await callOpenAICompatible(endpoint, config.apiKey, model, prompt, imageBase64);
   }
 }
 
@@ -553,7 +783,6 @@ async function callAnthropic(endpoint, apiKey, model, prompt, imageBase64) {
     content.push({ type: 'image', source: { type: 'base64', media_type: imageBase64.split(':')[1].split(';')[0], data: imageBase64.split(',')[1] } });
   }
   content.push({ type: 'text', text: prompt });
-
   var body = { model: model, max_tokens: 4096, messages: [{ role: 'user', content: content }] };
   var resp = await fetch(endpoint, {
     method: 'POST',
@@ -561,7 +790,7 @@ async function callAnthropic(endpoint, apiKey, model, prompt, imageBase64) {
     body: JSON.stringify(body)
   });
   var data = await resp.json();
-  if (data.error) throw new Error(JSON.stringify(data.error));
+  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
   var text = data.content[0].text;
   return parseAIResponse(text);
 }
@@ -572,7 +801,6 @@ async function callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64
     content.push({ type: 'image_url', image_url: { url: imageBase64 } });
   }
   content.push({ type: 'text', text: prompt });
-
   var body = { model: model, max_tokens: 4096, messages: [{ role: 'user', content: content }] };
   var resp = await fetch(endpoint, {
     method: 'POST',
@@ -588,11 +816,8 @@ async function callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64
 async function callGemini(endpoint, apiKey, model, prompt, imageBase64) {
   var parts = [{ text: prompt }];
   if (imageBase64) {
-    var base64Data = imageBase64.split(',')[1];
-    var mimeType = imageBase64.split(':')[1].split(';')[0];
-    parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+    parts.push({ inline_data: { mime_type: imageBase64.split(':')[1].split(';')[0], data: imageBase64.split(',')[1] } });
   }
-
   var sep = endpoint.indexOf('?') >= 0 ? '&' : '?';
   var url = endpoint + sep + 'key=' + apiKey;
   var body = { contents: [{ parts: parts }], generationConfig: { maxOutputTokens: 4096 } };
@@ -610,11 +835,8 @@ async function callGemini(endpoint, apiKey, model, prompt, imageBase64) {
 function parseAIResponse(text) {
   var jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error('No JSON found in AI response');
-  try {
-    return JSON.parse(jsonMatch[0]);
-  } catch (e) {
-    throw new Error('Failed to parse AI JSON: ' + e.message);
-  }
+  try { return JSON.parse(jsonMatch[0]); }
+  catch (e) { throw new Error('Failed to parse AI JSON: ' + e.message); }
 }
 
 // ==================== MATCH PREVIEW ====================
@@ -644,15 +866,25 @@ window.onmessage = function (e) {
     savedConfig = msg.config;
     if (savedConfig) {
       fillFormConfig(savedConfig);
+      // If we have saved model, populate model section
+      if (savedConfig.modelId) {
+        var sel = document.getElementById('model-select');
+        var opt = document.createElement('option');
+        opt.value = savedConfig.modelId;
+        opt.textContent = savedConfig.modelId;
+        sel.appendChild(opt);
+        sel.value = savedConfig.modelId;
+        document.getElementById('model-section').style.display = '';
+        document.getElementById('model-info').textContent = 'Using saved: ' + savedConfig.modelId;
+      }
       updateButtons();
     } else {
-      // First time - show config panel
       showConfigPanel();
     }
   }
 
   if (msg.type === 'config-saved') {
-    // Config saved successfully
+    // saved silently
   }
 
   if (msg.type === 'scan-progress') {
@@ -673,8 +905,7 @@ window.onmessage = function (e) {
       '<span>Comp Sets: <b>' + cs + '</b></span>' +
       '<span>Components: <b>' + c + '</b></span>' +
       '<span>Colors: <b>' + ps + '</b></span>' +
-      '<span>Text: <b>' + ts + '</b></span>' +
-      '</div>';
+      '<span>Text: <b>' + ts + '</b></span></div>';
     updateButtons();
   }
 
@@ -698,7 +929,6 @@ window.onmessage = function (e) {
 };
 
 // ==================== INIT ====================
-// Load saved config on startup
 parent.postMessage({ pluginMessage: { type: 'load-config' } }, '*');
 </script>
 </body>
