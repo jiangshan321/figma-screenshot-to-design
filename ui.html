@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1e1e2e;--bg2:#181825;--bg3:#313244;--bg4:#45475a;
+  --text:#cdd6f4;--text2:#a6adc8;--text3:#6c7086;
+  --accent:#cba6f7;--accent2:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--orange:#fab387;
+  --border:#313244;
+}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:12px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* Header */
+.header{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:14px;font-weight:600;color:var(--accent)}
+
+/* Buttons */
+button{padding:6px 14px;border:none;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
+button:active{transform:scale(.96)}
+.btn-p{background:var(--accent);color:#1e1e2e}
+.btn-p:hover{background:#b4befe}
+.btn-s{background:var(--bg3);color:var(--text)}
+.btn-s:hover{background:var(--bg4)}
+.btn-g{background:var(--green);color:#1e1e2e}
+.btn-g:hover{background:#94e2d5}
+
+/* Content */
+.content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* Section */
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px}
+.section-title{font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+/* Input */
+input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:11px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
+.form-row{margin-bottom:8px}
+.form-row:last-child{margin-bottom:0}
+
+/* Drop zone */
+.dropzone{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.dropzone:hover{border-color:var(--accent);background:rgba(203,166,247,.05)}
+.dropzone.has-image{border-color:var(--green);padding:8px}
+.dropzone img{max-width:100%;max-height:200px;border-radius:4px}
+.dropzone-icon{font-size:24px}
+.dropzone-text{font-size:11px;color:var(--text3)}
+
+/* Match table */
+.match-table{width:100%;border-collapse:collapse;font-size:10px}
+.match-table th{text-align:left;padding:4px 6px;background:var(--bg3);color:var(--text2);font-weight:500;border-bottom:1px solid var(--border)}
+.match-table td{padding:4px 6px;border-bottom:1px solid var(--border)}
+.match-tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500}
+.tag-component{background:rgba(166,227,161,.15);color:var(--green)}
+.tag-style{background:rgba(137,180,250,.15);color:var(--accent2)}
+.tag-fallback{background:rgba(243,139,168,.15);color:var(--red)}
+
+/* Status */
+.status{padding:4px 10px;font-size:10px;color:var(--text3);border-radius:4px}
+.status.ok{color:var(--green)}
+.status.err{color:var(--red)}
+.status.loading{color:var(--orange)}
+
+/* Log */
+.log{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;font-family:'SF Mono',monospace;font-size:10px;max-height:150px;overflow-y:auto;color:var(--text3);line-height:1.5}
+.log-line{margin-bottom:2px}
+
+/* Action bar */
+.action-bar{padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.action-bar .spacer{flex:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Screenshot to Design</h1>
+  <div id="ds-status" class="status">Not scanned</div>
+</div>
+
+<div class="content">
+  <!-- API Config -->
+  <div class="section">
+    <div class="section-title">API Settings</div>
+    <div class="form-row">
+      <label>Provider</label>
+      <select id="api-provider">
+        <option value="anthropic">Claude (Anthropic)</option>
+        <option value="openai">GPT-4o (OpenAI)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>API Key</label>
+      <input type="password" id="api-key" placeholder="sk-ant-... or sk-...">
+    </div>
+  </div>
+
+  <!-- Design System -->
+  <div class="section">
+    <div class="section-title">Design System</div>
+    <button class="btn-s" id="btn-scan" style="width:100%;margin-bottom:8px">Scan Current File</button>
+    <div id="ds-info" style="font-size:10px;color:var(--text3)">Click to scan components, styles, and tokens</div>
+  </div>
+
+  <!-- Screenshot -->
+  <div class="section">
+    <div class="section-title">Screenshot</div>
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">&#128247;</div>
+      <div class="dropzone-text">Paste or drop image here</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+  </div>
+
+  <!-- Analysis Log -->
+  <div class="section" id="log-section" style="display:none">
+    <div class="section-title">Analysis Log</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- Match Preview -->
+  <div class="section" id="preview-section" style="display:none">
+    <div class="section-title">Match Results</div>
+    <table class="match-table">
+      <thead><tr><th>#</th><th>Element</th><th>Matched To</th><th>Type</th></tr></thead>
+      <tbody id="match-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="btn-s" id="btn-analyze" disabled>&#128270; Analyze</button>
+  <button class="btn-g" id="btn-generate" disabled>&#9889; Generate Page</button>
+  <div class="spacer"></div>
+  <div id="action-status" class="status"></div>
+</div>
+
+<script>
+var designSystemData = null;
+var screenshotBase64 = null;
+var analysisResult = null;
+
+var logEl = document.getElementById('log');
+var dsStatus = document.getElementById('ds-status');
+var actionStatus = document.getElementById('action-status');
+var logSection = document.getElementById('log-section');
+var previewSection = document.getElementById('preview-section');
+
+function addLog(msg, type) {
+  logSection.style.display = '';
+  var line = document.createElement('div');
+  line.className = 'log-line';
+  line.textContent = (type === 'error' ? '❌ ' : type === 'success' ? '✅ ' : '⏳ ') + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setAction(msg, type) {
+  actionStatus.textContent = msg;
+  actionStatus.className = 'status ' + (type || '');
+}
+
+// ---- Scan Design System ----
+document.getElementById('btn-scan').addEventListener('click', function () {
+  dsStatus.textContent = 'Scanning...';
+  dsStatus.className = 'status loading';
+  parent.postMessage({ pluginMessage: { type: 'scan-design-system' } }, '*');
+});
+
+// ---- Screenshot Upload ----
+var dropzone = document.getElementById('dropzone');
+var fileInput = document.getElementById('file-input');
+
+dropzone.addEventListener('click', function () { fileInput.click(); });
+dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.style.borderColor = 'var(--accent)'; });
+dropzone.addEventListener('dragleave', function () { dropzone.style.borderColor = ''; });
+dropzone.addEventListener('drop', function (e) {
+  e.preventDefault();
+  dropzone.style.borderColor = '';
+  if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function () { if (fileInput.files.length > 0) handleFile(fileInput.files[0]); });
+
+// Paste support
+document.addEventListener('paste', function (e) {
+  var items = e.clipboardData.items;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      handleFile(items[i].getAsFile());
+      break;
+    }
+  }
+});
+
+function handleFile(file) {
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    screenshotBase64 = e.target.result;
+    dropzone.innerHTML = '';
+    dropzone.classList.add('has-image');
+    var img = document.createElement('img');
+    img.src = screenshotBase64;
+    dropzone.appendChild(img);
+    updateButtons();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateButtons() {
+  document.getElementById('btn-analyze').disabled = !(screenshotBase64 && designSystemData);
+}
+
+// ---- Analyze with AI ----
+document.getElementById('btn-analyze').addEventListener('click', async function () {
+  var provider = document.getElementById('api-provider').value;
+  var apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) { setAction('Please enter API Key', 'err'); return; }
+  if (!screenshotBase64) { setAction('Please upload screenshot', 'err'); return; }
+  if (!designSystemData) { setAction('Please scan design system first', 'err'); return; }
+
+  setAction('Analyzing...', 'loading');
+  addLog('Sending screenshot + design system to ' + provider + '...');
+
+  try {
+    var result;
+    if (provider === 'anthropic') {
+      result = await callClaude(apiKey, screenshotBase64, designSystemData);
+    } else {
+      result = await callOpenAI(apiKey, screenshotBase64, designSystemData);
+    }
+    analysisResult = result;
+    addLog('Analysis complete: ' + result.items.length + ' elements found', 'success');
+    renderMatchPreview(result.items);
+    document.getElementById('btn-generate').disabled = false;
+    setAction('Ready to generate', 'ok');
+  } catch (e) {
+    addLog('Error: ' + e.message, 'error');
+    setAction('Analysis failed', 'err');
+  }
+});
+
+// ---- Generate ----
+document.getElementById('btn-generate').addEventListener('click', function () {
+  if (!analysisResult) return;
+  setAction('Generating...', 'loading');
+  parent.postMessage({ pluginMessage: { type: 'generate-page', elements: analysisResult } }, '*');
+});
+
+// ---- AI Calls ----
+function buildPrompt(ds) {
+  var lines = [
+    'You are a UI design assistant. Analyze the attached screenshot and map each UI element to the closest matching component from the design system catalog below.',
+    '',
+    '## Design System Components',
+  ];
+  if (ds.componentSets && ds.componentSets.length > 0) {
+    lines.push('### Component Sets (preferred, use componentSetId):');
+    for (var i = 0; i < ds.componentSets.length; i++) {
+      var cs = ds.componentSets[i];
+      var props = [];
+      for (var pk in cs.variantProperties) { props.push(pk + ': [' + cs.variantProperties[pk].join('/') + ']'); }
+      lines.push((i + 1) + '. "' + cs.name + '" (id: ' + cs.id + ', ' + cs.childCount + ' variants, ' + props.join(', ') + ')');
+    }
+  }
+  if (ds.components && ds.components.length > 0) {
+    lines.push('### Individual Components:');
+    var shown = Math.min(ds.components.length, 50);
+    for (var j = 0; j < shown; j++) {
+      var c = ds.components[j];
+      var info = '"' + c.name + '" (id: ' + c.id;
+      if (c.fills.length) info += ', fills: ' + c.fills.join('/');
+      if (c.cornerRadius !== null) info += ', radius: ' + c.cornerRadius;
+      info += ', ' + c.width + 'x' + c.height + ')';
+      lines.push((j + 1) + '. ' + info);
+    }
+    if (ds.components.length > 50) lines.push('... and ' + (ds.components.length - 50) + ' more');
+  }
+  if (ds.paintStyles && ds.paintStyles.length > 0) {
+    lines.push('### Color Styles:');
+    for (var k = 0; k < Math.min(ds.paintStyles.length, 30); k++) {
+      var ps = ds.paintStyles[k];
+      lines.push('- "' + ps.name + '": ' + ps.hex);
+    }
+  }
+  if (ds.textStyles && ds.textStyles.length > 0) {
+    lines.push('### Text Styles:');
+    for (var m = 0; m < Math.min(ds.textStyles.length, 20); m++) {
+      var ts = ds.textStyles[m];
+      lines.push('- "' + ts.name + '": ' + ts.fontSize + 'px ' + ts.fontFamily);
+    }
+  }
+  lines.push('');
+  lines.push('## Output Format');
+  lines.push('Return ONLY valid JSON (no markdown, no explanation):');
+  lines.push('{');
+  lines.push('  "layout": { "direction": "vertical"|"horizontal", "gap": <number>, "padding": <number> },');
+  lines.push('  "items": [');
+  lines.push('    {');
+  lines.push('      "type": "button"|"input"|"text"|"image"|"checkbox"|"icon"|"card"|"divider"|"other",');
+  lines.push('      "label": "<description>",');
+  lines.push('      "text": "<extracted text content>",');
+  lines.push('      "matchType": "componentSet"|"component"|"style"|"fallback",');
+  lines.push('      "componentSetId": "<id if matchType=componentSet>",');
+  lines.push('      "componentId": "<id if matchType=component>",');
+  lines.push('      "variantOverrides": { "<prop>": "<value>" },');
+  lines.push('      "fills": ["#HEX"],');
+  lines.push('      "width": <number|null>,');
+  lines.push('      "height": <number|null>,');
+  lines.push('      "cornerRadius": <number|null>,');
+  lines.push('      "fontSize": <number|null>');
+  lines.push('    }');
+  lines.push('  ]');
+  lines.push('}');
+  lines.push('');
+  lines.push('Rules:');
+  lines.push('- Always prefer componentSet match over component match');
+  lines.push('- If no component matches, use "fallback" as matchType');
+  lines.push('- Preserve original text content from screenshot');
+  lines.push('- Estimate layout gap and padding from screenshot spacing');
+  lines.push('- Order items top-to-bottom (or left-to-right for horizontal layouts)');
+  return lines.join('\n');
+}
+
+async function callClaude(apiKey, imageBase64, ds) {
+  var prompt = buildPrompt(ds);
+  var body = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: imageBase64.split(':')[1].split(';')[0], data: imageBase64.split(',')[1] } },
+        { type: 'text', text: prompt }
+      ]
+    }]
+  };
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  var text = data.content[0].text;
+  // Extract JSON from response
+  var jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON found in AI response');
+  return JSON.parse(jsonMatch[0]);
+}
+
+async function callOpenAI(apiKey, imageBase64, ds) {
+  var prompt = buildPrompt(ds);
+  var body = {
+    model: 'gpt-4o',
+    max_tokens: 4096,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image_url', image_url: { url: imageBase64 } },
+        { type: 'text', text: prompt }
+      ]
+    }]
+  };
+  var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  var text = data.choices[0].message.content;
+  var jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON found in AI response');
+  return JSON.parse(jsonMatch[0]);
+}
+
+// ---- Match Preview ----
+function renderMatchPreview(items) {
+  previewSection.style.display = '';
+  var tbody = document.getElementById('match-tbody');
+  tbody.innerHTML = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var tr = document.createElement('tr');
+    var typeClass = item.matchType === 'componentSet' || item.matchType === 'component' ? 'tag-component' :
+                    item.matchType === 'style' ? 'tag-style' : 'tag-fallback';
+    tr.innerHTML = '<td>' + (i + 1) + '</td>' +
+      '<td>' + (item.text || item.label || item.type) + '</td>' +
+      '<td>' + (item.componentSetId || item.componentId || '—') + '</td>' +
+      '<td><span class="match-tag ' + typeClass + '">' + item.matchType + '</span></td>';
+    tbody.appendChild(tr);
+  }
+}
+
+// ---- Message Handler ----
+window.onmessage = function (e) {
+  var msg = e.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'scan-result') {
+    designSystemData = msg.data;
+    var c = msg.data.components ? msg.data.components.length : 0;
+    var cs = msg.data.componentSets ? msg.data.componentSets.length : 0;
+    var ps = msg.data.paintStyles ? msg.data.paintStyles.length : 0;
+    var ts = msg.data.textStyles ? msg.data.textStyles.length : 0;
+    dsStatus.textContent = cs + ' comp sets, ' + c + ' components';
+    dsStatus.className = 'status ok';
+    document.getElementById('ds-info').innerHTML =
+      '<div>Component Sets: <b>' + cs + '</b></div>' +
+      '<div>Components: <b>' + c + '</b></div>' +
+      '<div>Color Styles: <b>' + ps + '</b></div>' +
+      '<div>Text Styles: <b>' + ts + '</b></div>';
+    updateButtons();
+  }
+
+  if (msg.type === 'generate-result') {
+    if (msg.success) {
+      setAction('Generated: ' + msg.data.pageCount + ' elements', 'ok');
+      addLog('Page "' + msg.data.pageName + '" created with ' + msg.data.pageCount + ' elements', 'success');
+    } else {
+      setAction('Generation failed', 'err');
+      addLog('Error: ' + msg.error, 'error');
+    }
+  }
+};
+</script>
+</body>
+</html>
