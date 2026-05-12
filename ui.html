@@ -87,13 +87,26 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
     <div class="form-row">
       <label>Provider</label>
       <select id="api-provider">
+        <option value="doubao">豆包 Doubao (字节)</option>
         <option value="anthropic">Claude (Anthropic)</option>
         <option value="openai">GPT-4o (OpenAI)</option>
+        <option value="qwen">通义千问 Qwen (阿里)</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="gemini">Gemini (Google)</option>
+        <option value="moonshot">Kimi / Moonshot</option>
       </select>
     </div>
     <div class="form-row">
+      <label>Endpoint (豆包/自定义模型需填写)</label>
+      <input type="text" id="api-endpoint" placeholder="如：https://ark.cn-beijing.volces.com/api/v3/chat/completions">
+    </div>
+    <div class="form-row">
+      <label>Model ID (豆包/自定义模型需填写)</label>
+      <input type="text" id="api-model" placeholder="如：doubao-1-5-vision-pro-32k-250115">
+    </div>
+    <div class="form-row">
       <label>API Key</label>
-      <input type="password" id="api-key" placeholder="sk-ant-... or sk-...">
+      <input type="password" id="api-key" placeholder="API Key">
     </div>
   </div>
 
@@ -216,6 +229,8 @@ function updateButtons() {
 document.getElementById('btn-analyze').addEventListener('click', async function () {
   var provider = document.getElementById('api-provider').value;
   var apiKey = document.getElementById('api-key').value.trim();
+  var endpoint = document.getElementById('api-endpoint').value.trim();
+  var modelId = document.getElementById('api-model').value.trim();
   if (!apiKey) { setAction('Please enter API Key', 'err'); return; }
   if (!screenshotBase64) { setAction('Please upload screenshot', 'err'); return; }
   if (!designSystemData) { setAction('Please scan design system first', 'err'); return; }
@@ -224,12 +239,7 @@ document.getElementById('btn-analyze').addEventListener('click', async function 
   addLog('Sending screenshot + design system to ' + provider + '...');
 
   try {
-    var result;
-    if (provider === 'anthropic') {
-      result = await callClaude(apiKey, screenshotBase64, designSystemData);
-    } else {
-      result = await callOpenAI(apiKey, screenshotBase64, designSystemData);
-    }
+    var result = await callAI(provider, apiKey, endpoint, modelId, screenshotBase64, designSystemData);
     analysisResult = result;
     addLog('Analysis complete: ' + result.items.length + ' elements found', 'success');
     renderMatchPreview(result.items);
@@ -323,10 +333,41 @@ function buildPrompt(ds) {
   return lines.join('\n');
 }
 
-async function callClaude(apiKey, imageBase64, ds) {
+// ---- Provider config ----
+var PROVIDERS = {
+  anthropic:  { endpoint: 'https://api.anthropic.com/v1/messages', model: 'claude-sonnet-4-20250514', format: 'anthropic' },
+  openai:     { endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o', format: 'openai' },
+  doubao:     { endpoint: '', model: '', format: 'openai' },
+  qwen:       { endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model: 'qwen-vl-max', format: 'openai' },
+  deepseek:   { endpoint: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat', format: 'openai' },
+  gemini:     { endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', model: 'gemini-2.0-flash', format: 'gemini' },
+  moonshot:   { endpoint: 'https://api.moonshot.cn/v1/chat/completions', model: 'moonshot-v1-8k', format: 'openai' },
+};
+
+async function callAI(provider, apiKey, customEndpoint, customModel, imageBase64, ds) {
+  var cfg = PROVIDERS[provider];
+  if (!cfg) throw new Error('Unknown provider: ' + provider);
+
+  var endpoint = customEndpoint || cfg.endpoint;
+  var model = customModel || cfg.model;
+  if (!endpoint) throw new Error('请填写 Endpoint');
+  if (!model) throw new Error('请填写 Model ID');
+
   var prompt = buildPrompt(ds);
+
+  if (cfg.format === 'anthropic') {
+    return await callAnthropic(endpoint, apiKey, model, prompt, imageBase64);
+  } else if (cfg.format === 'gemini') {
+    return await callGemini(endpoint, apiKey, model, prompt, imageBase64);
+  } else {
+    // OpenAI-compatible: doubao, qwen, deepseek, moonshot, openai
+    return await callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64);
+  }
+}
+
+async function callAnthropic(endpoint, apiKey, model, prompt, imageBase64) {
   var body = {
-    model: 'claude-sonnet-4-20250514',
+    model: model,
     max_tokens: 4096,
     messages: [{
       role: 'user',
@@ -336,24 +377,20 @@ async function callClaude(apiKey, imageBase64, ds) {
       ]
     }]
   };
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+  var resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
     body: JSON.stringify(body)
   });
   var data = await resp.json();
-  if (data.error) throw new Error(data.error.message);
+  if (data.error) throw new Error(JSON.stringify(data.error));
   var text = data.content[0].text;
-  // Extract JSON from response
-  var jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON found in AI response');
-  return JSON.parse(jsonMatch[0]);
+  return parseAIResponse(text);
 }
 
-async function callOpenAI(apiKey, imageBase64, ds) {
-  var prompt = buildPrompt(ds);
+async function callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64) {
   var body = {
-    model: 'gpt-4o',
+    model: model,
     max_tokens: 4096,
     messages: [{
       role: 'user',
@@ -363,17 +400,50 @@ async function callOpenAI(apiKey, imageBase64, ds) {
       ]
     }]
   };
-  var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+  var resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
     body: JSON.stringify(body)
   });
   var data = await resp.json();
-  if (data.error) throw new Error(data.error.message);
+  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
   var text = data.choices[0].message.content;
+  return parseAIResponse(text);
+}
+
+async function callGemini(endpoint, apiKey, model, prompt, imageBase64) {
+  var base64Data = imageBase64.split(',')[1];
+  var mimeType = imageBase64.split(':')[1].split(';')[0];
+  var sep = endpoint.indexOf('?') >= 0 ? "&" : "?";
+  var url = endpoint + sep + "key=" + apiKey;
+  var body = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inline_data: { mime_type: mimeType, data: base64Data } }
+      ]
+    }],
+    generationConfig: { maxOutputTokens: 4096 }
+  };
+  var resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(JSON.stringify(data.error));
+  var text = data.candidates[0].content.parts[0].text;
+  return parseAIResponse(text);
+}
+
+function parseAIResponse(text) {
   var jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error('No JSON found in AI response');
-  return JSON.parse(jsonMatch[0]);
+  try {
+    return JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    throw new Error('Failed to parse AI JSON: ' + e.message);
+  }
 }
 
 // ---- Match Preview ----
