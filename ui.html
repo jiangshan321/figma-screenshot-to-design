@@ -753,93 +753,59 @@ document.getElementById('btn-generate').addEventListener('click', function () {
 // ==================== AI API CALLS ====================
 function buildPrompt(ds) {
   var lines = [
-    'You are a senior UI designer. Your task: analyze the attached screenshot and output a precise JSON description that can be used to recreate this UI in Figma.',
+    'You are a UI builder. You MUST use ONLY the components listed below to recreate the screenshot. You CANNOT invent or create new elements.',
     '',
-    '## STEP-BY-STEP ANALYSIS',
+    '## ABSOLUTE RULES',
+    '1. Every item MUST have matchType="component" or matchType="componentSet"',
+    '2. Every item MUST reference a real componentId or componentSetId from the lists below',
+    '3. You MUST NOT output matchType="fallback" for any element',
+    '4. Match each screenshot element to the CLOSEST component by visual similarity (shape, size, color, role)',
+    '5. If a screenshot element looks like an input field, find the closest input/field component',
+    '6. If a screenshot element looks like a button, find the closest button component',
+    '7. Use variantOverrides to pick the right variant (e.g. State=Default, Size=Large)',
+    '8. Override text content with the "text" field to match screenshot text',
+    '9. Order items top-to-bottom as they appear in the screenshot',
     '',
-    '1. First, determine the overall layout:',
-    '   - Is it a mobile screen (~375px wide) or desktop? Set layout.width accordingly.',
-    '   - What is the background color? Set layout.background.',
-    '   - What is the gap/spacing between elements? Set layout.gap.',
-    '   - What is the edge padding? Set layout.padding.',
-    '',
-    '2. Then, identify EVERY visible element from TOP to BOTTOM:',
-    '   - type="input" for text input fields (with placeholder text, border, background)',
-    '   - type="button" for clickable buttons (with label, background color)',
-    '   - type="text" for labels, headings, paragraphs (extract exact text, font size, color)',
-    '   - type="image" for images or logos',
-    '   - type="divider" for horizontal lines or separators',
-    '   - type="checkbox" for checkboxes with labels',
-    '   - type="card" for card/container sections',
-    '   - type="icon" for icons',
-    '',
-    '3. For EACH element, estimate realistic pixel values:',
-    '   - width: full-width inputs/buttons on mobile ≈ 327px (375 - 2*24 padding)',
-    '   - height: input ≈ 44-48px, button ≈ 44-48px, text line ≈ 20-24px',
-    '   - fontSize: heading 24-32px, subtitle 14-16px, body 12-14px, caption 10-11px',
-    '   - cornerRadius: rounded inputs/buttons ≈ 8-12px, cards ≈ 12-16px',
-    '   - fills: the element background color as hex (e.g. ["#6C3FA0"])',
-    '',
-    '4. IMPORTANT TYPE DISTINCTION:',
-    '   - An input field with placeholder text like "Enter email" → type="input", NOT type="text"',
-    '   - A heading like "Welcome Back" → type="text"',
-    '   - A clickable action like "Log In" → type="button"',
-    '   - A small link like "Forgot?" → type="text" (with link color)',
-    '',
-    '5. Match elements to design system components if available (see below).',
   ];
 
   if (ds && ds.componentSets && ds.componentSets.length > 0) {
-    lines.push('');
-    lines.push('## Available Component Sets (use these if they match):');
+    lines.push('## Component Sets (PREFER THESE):');
     for (var i = 0; i < ds.componentSets.length; i++) {
       var cs = ds.componentSets[i];
       var props = [];
       for (var pk in cs.variantProperties) { props.push(pk + ': [' + cs.variantProperties[pk].join('/') + ']'); }
-      lines.push((i + 1) + '. "' + cs.name + '" (componentSetId: ' + cs.id + ', ' + props.join(', ') + ')');
+      lines.push('"' + cs.name + '" | componentSetId: ' + cs.id + ' | variants: ' + props.join(', '));
     }
-    lines.push('If a screenshot element matches a component, set matchType="componentSet" and componentSetId.');
+    lines.push('');
   }
   if (ds && ds.components && ds.components.length > 0) {
-    lines.push('');
-    lines.push('## Available Components:');
-    var shown = Math.min(ds.components.length, 50);
+    lines.push('## Individual Components:');
+    var shown = Math.min(ds.components.length, 80);
     for (var j = 0; j < shown; j++) {
       var c = ds.components[j];
-      var info = '"' + c.name + '" (componentId: ' + c.id;
-      if (c.fills.length) info += ', color: ' + c.fills.join('/');
-      if (c.cornerRadius !== null) info += ', radius: ' + c.cornerRadius;
-      info += ', ' + c.width + 'x' + c.height + ')';
-      lines.push((j + 1) + '. ' + info);
+      var info = '"' + c.name + '" | componentId: ' + c.id;
+      if (c.fills.length) info += ' | color: ' + c.fills.join('/');
+      if (c.cornerRadius !== null) info += ' | radius: ' + c.cornerRadius;
+      info += ' | ' + c.width + 'x' + c.height;
+      lines.push(info);
     }
+    if (ds.components.length > 80) lines.push('... and ' + (ds.components.length - 80) + ' more');
+    lines.push('');
   }
 
-  lines.push('');
-  lines.push('## OUTPUT FORMAT');
-  lines.push('Return ONLY a JSON object. No markdown. No explanation. No code fences.');
-  lines.push('');
+  lines.push('## OUTPUT');
+  lines.push('JSON only. No markdown. No explanation.');
   lines.push('{');
-  lines.push('  "layout": {');
-  lines.push('    "direction": "vertical",');
-  lines.push('    "width": 375,');
-  lines.push('    "gap": 16,');
-  lines.push('    "padding": 24,');
-  lines.push('    "background": "#FFFFFF"');
-  lines.push('  },');
+  lines.push('  "layout": { "direction": "vertical", "gap": <number>, "padding": <number>, "background": "#HEX", "width": <number> },');
   lines.push('  "items": [');
   lines.push('    {');
-  lines.push('      "type": "text|input|button|image|divider|checkbox|card|icon|other",');
-  lines.push('      "label": "Description of this element",');
-  lines.push('      "text": "Exact text content from screenshot",');
-  lines.push('      "matchType": "componentSet|component|fallback",');
-  lines.push('      "componentSetId": "id-if-matched",');
-  lines.push('      "componentId": "id-if-matched",');
-  lines.push('      "variantOverrides": {"Property": "Value"},');
-  lines.push('      "fills": ["#HEXCOLOR"],');
-  lines.push('      "width": 327,');
-  lines.push('      "height": 44,');
-  lines.push('      "cornerRadius": 8,');
-  lines.push('      "fontSize": 14');
+  lines.push('      "type": "<element description>",');
+  lines.push('      "label": "<what this element is>",');
+  lines.push('      "text": "<text to override, from screenshot>",');
+  lines.push('      "matchType": "componentSet" or "component",');
+  lines.push('      "componentSetId": "<id from list above>",');
+  lines.push('      "componentId": "<id from list above>",');
+  lines.push('      "variantOverrides": { "Property": "Value" }');
   lines.push('    }');
   lines.push('  ]');
   lines.push('}');
@@ -992,11 +958,25 @@ function renderMatchPreview(items) {
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
     var tr = document.createElement('tr');
-    var typeClass = item.matchType === 'componentSet' || item.matchType === 'component' ? 'tag-component' :
-                    item.matchType === 'style' ? 'tag-style' : 'tag-fallback';
+    var typeClass = item.matchType === 'componentSet' || item.matchType === 'component' ? 'tag-component' : 'tag-fallback';
+    var matchId = item.componentSetId || item.componentId || '';
+    // Try to find component name from design system data
+    var matchName = matchId;
+    if (designSystemData) {
+      if (item.componentSetId && designSystemData.componentSets) {
+        for (var j = 0; j < designSystemData.componentSets.length; j++) {
+          if (designSystemData.componentSets[j].id === item.componentSetId) { matchName = designSystemData.componentSets[j].name; break; }
+        }
+      }
+      if (item.componentId && designSystemData.components) {
+        for (var k = 0; k < designSystemData.components.length; k++) {
+          if (designSystemData.components[k].id === item.componentId) { matchName = designSystemData.components[k].name; break; }
+        }
+      }
+    }
     tr.innerHTML = '<td>' + (i + 1) + '</td>' +
       '<td>' + (item.text || item.label || item.type) + '</td>' +
-      '<td>' + (item.componentSetId || item.componentId || '\u2014') + '</td>' +
+      '<td>' + (matchName || '\u2014') + '</td>' +
       '<td><span class="match-tag ' + typeClass + '">' + item.matchType + '</span></td>';
     tbody.appendChild(tr);
   }
