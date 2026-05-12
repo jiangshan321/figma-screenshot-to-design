@@ -367,7 +367,7 @@ async function generatePage(elements) {
             }
           }
         }
-      } catch (e) { node = createFallback(item); }
+      } catch (e) { node = await createFallback(item); }
     } else if (item.matchType === "componentSet" && item.componentSetId) {
       try {
         var csNode = figma.getNodeById(item.componentSetId);
@@ -378,9 +378,9 @@ async function generatePage(elements) {
             if (item.text) await setText(node, item.text);
           }
         }
-      } catch (e) { node = createFallback(item); }
+      } catch (e) { node = await createFallback(item); }
     } else {
-      node = createFallback(item);
+      node = await createFallback(item);
     }
 
     if (node) {
@@ -410,7 +410,7 @@ function findMatchingVariant(cs, overrides) {
   return cs.children.length > 0 ? cs.children[0] : null;
 }
 
-function createFallback(item) {
+async function createFallback(item) {
   var type = item.type || "other";
   var frame = figma.createFrame();
   frame.name = item.label || type;
@@ -419,8 +419,17 @@ function createFallback(item) {
   var w = item.width || 311;
   var h = item.height;
 
+  // Helper: create text with font loading
+  async function makeText(text, fontSize, color) {
+    var t = figma.createText();
+    await loadFont(t);
+    t.characters = text;
+    t.fontSize = fontSize || 14;
+    if (color) t.fills = [{ type: "SOLID", color: color }];
+    return t;
+  }
+
   if (type === "input") {
-    // Input field: bordered box with placeholder text
     frame.layoutMode = "VERTICAL";
     frame.counterAxisAlignItems = "START";
     frame.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
@@ -433,7 +442,6 @@ function createFallback(item) {
     frame.paddingRight = 14;
     frame.paddingTop = 0;
     frame.paddingBottom = 0;
-    // Inner: horizontal row for placeholder
     var inner = figma.createFrame();
     inner.layoutMode = "HORIZONTAL";
     inner.primaryAxisAlignItems = "CENTER";
@@ -441,15 +449,10 @@ function createFallback(item) {
     inner.resize(w - 28, h);
     inner.fills = [];
     if (item.text) {
-      var ph = figma.createText();
-      ph.characters = item.text;
-      ph.fontSize = item.fontSize || 14;
-      ph.fills = [{ type: "SOLID", color: { r: 0.65, g: 0.65, b: 0.68 } }];
-      inner.appendChild(ph);
+      inner.appendChild(await makeText(item.text, item.fontSize || 14, { r: 0.65, g: 0.65, b: 0.68 }));
     }
     frame.appendChild(inner);
   } else if (type === "button") {
-    // Button: filled background with centered text
     frame.layoutMode = "HORIZONTAL";
     frame.primaryAxisAlignItems = "CENTER";
     frame.counterAxisAlignItems = "CENTER";
@@ -463,37 +466,27 @@ function createFallback(item) {
     }
     frame.fills = [{ type: "SOLID", color: fillColor }];
     if (item.text) {
-      var btn = figma.createText();
-      btn.characters = item.text;
-      btn.fontSize = item.fontSize || 15;
-      btn.fontWeight = 600;
-      btn.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-      frame.appendChild(btn);
+      frame.appendChild(await makeText(item.text, item.fontSize || 15, { r: 1, g: 1, b: 1 }));
     }
   } else if (type === "text") {
-    // Text label - auto height
     frame.layoutMode = "HORIZONTAL";
     frame.counterAxisAlignItems = "CENTER";
     frame.fills = [];
     frame.counterAxisSizingMode = "AUTO";
     frame.resize(w, 20);
     if (item.text) {
-      var tn = figma.createText();
-      tn.characters = item.text;
-      tn.fontSize = item.fontSize || 14;
+      var textColor = null;
       if (item.fills && item.fills.length > 0) {
         var tc = hexToRgb(item.fills[0]);
-        if (tc) tn.fills = [{ type: "SOLID", color: tc }];
+        if (tc) textColor = tc;
       }
-      frame.appendChild(tn);
+      frame.appendChild(await makeText(item.text, item.fontSize || 14, textColor));
     }
   } else if (type === "divider") {
-    // Divider line
     frame.fills = [{ type: "SOLID", color: { r: 0.9, g: 0.9, b: 0.92 } }];
     h = h || 1;
     frame.resize(w, h);
   } else if (type === "image") {
-    // Image placeholder
     frame.fills = [{ type: "SOLID", color: { r: 0.92, g: 0.92, b: 0.94 } }];
     frame.cornerRadius = item.cornerRadius || 0;
     h = h || 120;
@@ -501,13 +494,8 @@ function createFallback(item) {
     frame.layoutMode = "HORIZONTAL";
     frame.primaryAxisAlignItems = "CENTER";
     frame.counterAxisAlignItems = "CENTER";
-    var imgLabel = figma.createText();
-    imgLabel.characters = item.text || "Image";
-    imgLabel.fontSize = 11;
-    imgLabel.fills = [{ type: "SOLID", color: { r: 0.6, g: 0.6, b: 0.63 } }];
-    frame.appendChild(imgLabel);
+    frame.appendChild(await makeText(item.text || "Image", 11, { r: 0.6, g: 0.6, b: 0.63 }));
   } else if (type === "checkbox") {
-    // Checkbox with label
     frame.layoutMode = "HORIZONTAL";
     frame.primaryAxisAlignItems = "CENTER";
     frame.counterAxisAlignItems = "CENTER";
@@ -515,7 +503,6 @@ function createFallback(item) {
     frame.fills = [];
     frame.counterAxisSizingMode = "AUTO";
     frame.resize(w, 20);
-    // Checkbox square
     var box = figma.createFrame();
     box.resize(16, 16);
     box.cornerRadius = 3;
@@ -524,13 +511,9 @@ function createFallback(item) {
     box.fills = [];
     frame.appendChild(box);
     if (item.text) {
-      var cbLabel = figma.createText();
-      cbLabel.characters = item.text;
-      cbLabel.fontSize = item.fontSize || 13;
-      frame.appendChild(cbLabel);
+      frame.appendChild(await makeText(item.text, item.fontSize || 13, null));
     }
   } else if (type === "card") {
-    // Card container
     frame.layoutMode = "VERTICAL";
     frame.itemSpacing = 8;
     frame.paddingLeft = 16;
@@ -544,13 +527,9 @@ function createFallback(item) {
     h = h || 100;
     frame.resize(w, h);
     if (item.text) {
-      var cardText = figma.createText();
-      cardText.characters = item.text;
-      cardText.fontSize = item.fontSize || 14;
-      frame.appendChild(cardText);
+      frame.appendChild(await makeText(item.text, item.fontSize || 14, null));
     }
   } else {
-    // Generic fallback
     frame.layoutMode = "HORIZONTAL";
     frame.primaryAxisAlignItems = "CENTER";
     frame.counterAxisAlignItems = "CENTER";
@@ -564,12 +543,9 @@ function createFallback(item) {
       if (c2) frame.fills = [{ type: "SOLID", color: c2 }];
     }
     if (item.text) {
-      var tn2 = figma.createText();
-      tn2.characters = item.text;
-      tn2.fontSize = item.fontSize || 14;
-      frame.appendChild(tn2);
+      frame.appendChild(await makeText(item.text, item.fontSize || 14, null));
     }
-    if (h) frame.resize(w, h);
+    if (h && h > 0) frame.resize(w, h);
   }
 
   return frame;
