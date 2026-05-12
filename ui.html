@@ -183,11 +183,11 @@ label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
       </div>
       <div class="form-row">
         <label>Endpoint</label>
-        <input type="text" id="api-endpoint" placeholder="API endpoint URL">
+        <input type="text" id="api-endpoint" placeholder="豆包: https://ark.cn-beijing.volces.com/api/v3/chat/completions">
       </div>
       <div class="form-row">
         <label>Model ID</label>
-        <input type="text" id="api-model" placeholder="Model identifier">
+        <input type="text" id="api-model" placeholder="豆包: doubao-1-5-vision-pro-32k-250115">
       </div>
       <div class="form-row">
         <label>API Key</label>
@@ -300,8 +300,14 @@ document.getElementById('api-provider').addEventListener('change', function () {
   var p = this.value;
   var cfg = PROVIDERS[p];
   if (cfg) {
-    if (cfg.endpoint) document.getElementById('api-endpoint').value = cfg.endpoint;
-    if (cfg.model) document.getElementById('api-model').value = cfg.model;
+    document.getElementById('api-endpoint').value = cfg.endpoint || '';
+    document.getElementById('api-model').value = cfg.model || '';
+    // Show hint for providers that require manual input
+    if (!cfg.endpoint || !cfg.model) {
+      showTestResult('ok', '\u2139\ufe0f ' + p + ' \u9700\u8981\u624b\u52a8\u586b\u5199 Endpoint \u548c Model ID');
+    } else {
+      document.getElementById('test-result').style.display = 'none';
+    }
   }
 });
 
@@ -315,8 +321,8 @@ document.getElementById('btn-test-conn').addEventListener('click', async functio
   var endpoint = cfg.endpoint || PROVIDERS[provider].endpoint;
   var model = cfg.model || PROVIDERS[provider].model;
 
-  if (!endpoint) { showTestResult('err', 'Please fill Endpoint'); return; }
-  if (!model) { showTestResult('err', 'Please fill Model ID'); return; }
+  if (!endpoint) { showTestResult('err', '\u274c Endpoint is required. \u8c46\u5305\u7528\u6237\u8bf7\u586b\u5199\u706b\u5c71\u5f15\u64ce Endpoint\uff0c\u5982 https://ark.cn-beijing.volces.com/api/v3/chat/completions'); return; }
+  if (!model) { showTestResult('err', '\u274c Model ID is required. \u8c46\u5305\u7528\u6237\u8bf7\u586b\u5199\u6a21\u578b ID\uff0c\u5982 doubao-1-5-vision-pro-32k-250115'); return; }
 
   var btn = document.getElementById('btn-test-conn');
   btn.disabled = true;
