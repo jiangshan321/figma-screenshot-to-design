@@ -494,6 +494,7 @@ async function doFetchModels(provider, apiKey) {
   var resp = await fetch(cfg.modelsUrl, {
     headers: { 'Authorization': 'Bearer ' + apiKey }
   });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status + ': ' + resp.statusText);
   var data = await resp.json();
   if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
   var models = [];
@@ -501,7 +502,22 @@ async function doFetchModels(provider, apiKey) {
   for (var i = 0; i < list.length; i++) {
     var m = list[i];
     var id = m.id || '';
-    if (id) models.push({ id: id, vision: isVisionModel(id, provider) });
+    if (!id) continue;
+    // Skip non-active models (Shutdown, Retiring)
+    if (m.status === 'Shutdown' || m.status === 'Retiring') continue;
+    // Skip non-chat models (Embedding, ImageGeneration, VideoGeneration, 3DGeneration, Router)
+    var domain = m.domain || '';
+    if (domain === 'Embedding' || domain === 'ImageGeneration' || domain === 'VideoGeneration' ||
+        domain === '3DGeneration' || domain === 'Router') continue;
+    // Detect vision: check input_modalities or model name
+    var modalities = m.modalities || {};
+    var inputMods = modalities.input_modalities || [];
+    var hasVision = false;
+    for (var j = 0; j < inputMods.length; j++) {
+      if (inputMods[j] === 'image') { hasVision = true; break; }
+    }
+    if (!hasVision) hasVision = isVisionModel(id, provider);
+    models.push({ id: id, vision: hasVision, name: m.name || id });
   }
   return models;
 }
@@ -513,7 +529,7 @@ function renderModels(models, provider) {
 
   sel.innerHTML = '';
 
-  // Sort: vision models first
+  // Sort: vision models first, then by name
   var vision = [], text = [];
   for (var i = 0; i < models.length; i++) {
     if (models[i].vision) vision.push(models[i]);
@@ -526,7 +542,7 @@ function renderModels(models, provider) {
     for (var j = 0; j < vision.length; j++) {
       var opt = document.createElement('option');
       opt.value = vision[j].id;
-      opt.textContent = '\u{1F4F7} ' + vision[j].id;
+      opt.textContent = '\u{1F4F7} ' + (vision[j].name || vision[j].id);
       optGroup.appendChild(opt);
     }
     sel.appendChild(optGroup);
@@ -538,7 +554,7 @@ function renderModels(models, provider) {
     for (var k = 0; k < text.length; k++) {
       var opt2 = document.createElement('option');
       opt2.value = text[k].id;
-      opt2.textContent = '   ' + text[k].id;
+      opt2.textContent = '   ' + (text[k].name || text[k].id);
       optGroup2.appendChild(opt2);
     }
     sel.appendChild(optGroup2);
