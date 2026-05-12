@@ -361,9 +361,12 @@ function getFormConfig() {
   if (modelSel.selectedOptions && modelSel.selectedOptions.length > 0) {
     modelName = modelSel.selectedOptions[0].textContent.replace(/^[\u{1F4F7}\s]+/u, '').trim() || modelId;
   }
+  // Clean API key - remove non-ASCII characters (invisible Unicode from copy-paste)
+  var rawKey = document.getElementById('api-key').value;
+  var apiKey = rawKey.replace(/[^\x20-\x7E]/g, '').trim();
   return {
     provider: provider,
-    apiKey: document.getElementById('api-key').value.trim(),
+    apiKey: apiKey,
     modelId: modelId,
     modelName: modelName,
     endpoint: endpoint
@@ -850,6 +853,7 @@ async function callAI(config, imageBase64, dsOrPrompt) {
 
   var endpoint = config.endpoint || getEndpointForProvider(provider, config.modelId);
   var model = config.modelId;
+  var apiKey = (config.apiKey || '').replace(/[^\x20-\x7E]/g, '');
   if (!endpoint) throw new Error('Endpoint not configured');
   if (!model) throw new Error('Model not selected');
 
@@ -861,11 +865,11 @@ async function callAI(config, imageBase64, dsOrPrompt) {
   }
 
   if (pCfg.format === 'anthropic') {
-    return await callAnthropic(endpoint, config.apiKey, model, prompt, imageBase64);
+    return await callAnthropic(endpoint, apiKey, model, prompt, imageBase64);
   } else if (pCfg.format === 'gemini') {
-    return await callGemini(endpoint, config.apiKey, model, prompt, imageBase64);
+    return await callGemini(endpoint, apiKey, model, prompt, imageBase64);
   } else {
-    return await callOpenAICompatible(endpoint, config.apiKey, model, prompt, imageBase64);
+    return await callOpenAICompatible(endpoint, apiKey, model, prompt, imageBase64);
   }
 }
 
@@ -875,13 +879,14 @@ async function testAICall(config) {
   var pCfg = PROVIDERS[provider];
   var endpoint = config.endpoint || getEndpointForProvider(provider, config.modelId);
   var model = config.modelId;
+  var apiKey = (config.apiKey || '').replace(/[^\x20-\x7E]/g, '');
   var prompt = 'Hi, reply with OK.';
 
   if (pCfg.format === 'anthropic') {
     var body = { model: model, max_tokens: 64, messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }] };
     var resp = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': config.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify(body)
     });
     var data = await resp.json();
@@ -892,7 +897,7 @@ async function testAICall(config) {
 
   if (pCfg.format === 'gemini') {
     var sep = endpoint.indexOf('?') >= 0 ? '&' : '?';
-    var url = endpoint + sep + 'key=' + config.apiKey;
+    var url = endpoint + sep + 'key=' + apiKey;
     var body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 64 } };
     var resp = await fetch(url, {
       method: 'POST',
@@ -908,7 +913,7 @@ async function testAICall(config) {
   var body = { model: model, max_tokens: 64, messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }] };
   var resp = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
     body: JSON.stringify(body)
   });
   var data = await resp.json();
