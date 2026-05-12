@@ -340,15 +340,28 @@ async function generatePage(elements) {
   var root = figma.createFrame();
   root.name = "Generated Layout";
   root.layoutMode = layout.direction === "horizontal" ? "HORIZONTAL" : "VERTICAL";
-  root.itemSpacing = layout.gap || 16;
+  root.itemSpacing = layout.gap || 12;
   var pad = layout.padding || 24;
   root.paddingLeft = pad;
   root.paddingRight = pad;
   root.paddingTop = pad;
   root.paddingBottom = pad;
-  root.primaryAxisAlignItems = "CENTER";
-  root.counterAxisAlignItems = "CENTER";
-  root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  root.primaryAxisAlignItems = "MIN";
+  root.counterAxisAlignItems = "MIN";
+  // Try to detect background color from layout
+  if (layout.background) {
+    var bgc = hexToRgb(layout.background);
+    if (bgc) root.fills = [{ type: "SOLID", color: bgc }];
+    else root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  } else {
+    root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  }
+  // Auto-size width to content
+  root.counterAxisSizingMode = "AUTO";
+  if (layout.width && layout.width > 0) {
+    root.counterAxisSizingMode = "FIXED";
+    root.resize(layout.width, root.height);
+  }
   page.appendChild(root);
 
   for (var i = 0; i < elements.items.length; i++) {
