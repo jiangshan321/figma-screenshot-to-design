@@ -336,14 +336,16 @@ async function generatePage(elements) {
   var page = figma.createPage();
   page.name = "Generated - " + new Date().toLocaleDateString();
 
+  var layout = elements.layout || {};
   var root = figma.createFrame();
   root.name = "Generated Layout";
-  root.layoutMode = "VERTICAL";
-  root.itemSpacing = elements.gap || 16;
-  root.paddingLeft = elements.padding || 24;
-  root.paddingRight = elements.padding || 24;
-  root.paddingTop = elements.padding || 24;
-  root.paddingBottom = elements.padding || 24;
+  root.layoutMode = layout.direction === "horizontal" ? "HORIZONTAL" : "VERTICAL";
+  root.itemSpacing = layout.gap || 16;
+  var pad = layout.padding || 24;
+  root.paddingLeft = pad;
+  root.paddingRight = pad;
+  root.paddingTop = pad;
+  root.paddingBottom = pad;
   root.primaryAxisAlignItems = "CENTER";
   root.counterAxisAlignItems = "CENTER";
   root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
@@ -382,7 +384,7 @@ async function generatePage(elements) {
     }
 
     if (node) {
-      if (item.width && item.height) node.resize(item.width, node.height);
+      if (item.width) node.resize(item.width, item.height || node.height);
       root.appendChild(node);
     }
   }
@@ -405,25 +407,165 @@ function findMatchingVariant(cs, overrides) {
 }
 
 function createFallback(item) {
+  var type = item.type || "other";
   var frame = figma.createFrame();
-  frame.name = item.label || item.type || "Element";
-  frame.layoutMode = "HORIZONTAL";
-  frame.primaryAxisAlignItems = "CENTER";
-  frame.counterAxisAlignItems = "CENTER";
-  frame.paddingLeft = 12; frame.paddingRight = 12;
-  frame.paddingTop = 8; frame.paddingBottom = 8;
-  frame.cornerRadius = item.cornerRadius || 0;
-  if (item.fills && item.fills.length > 0) {
-    var c = hexToRgb(item.fills[0]);
-    if (c) frame.fills = [{ type: "SOLID", color: c }];
+  frame.name = item.label || type;
+
+  // Default sizing
+  var w = item.width || 311;
+  var h = item.height;
+
+  if (type === "input") {
+    // Input field: bordered box with placeholder text
+    frame.layoutMode = "VERTICAL";
+    frame.counterAxisAlignItems = "START";
+    frame.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+    frame.strokes = [{ type: "SOLID", color: { r: 0.85, g: 0.85, b: 0.87 } }];
+    frame.strokeWeight = 1;
+    frame.cornerRadius = item.cornerRadius || 8;
+    h = h || 44;
+    frame.resize(w, h);
+    frame.paddingLeft = 14;
+    frame.paddingRight = 14;
+    frame.paddingTop = 0;
+    frame.paddingBottom = 0;
+    // Inner: horizontal row for placeholder
+    var inner = figma.createFrame();
+    inner.layoutMode = "HORIZONTAL";
+    inner.primaryAxisAlignItems = "CENTER";
+    inner.counterAxisAlignItems = "CENTER";
+    inner.resize(w - 28, h);
+    inner.fills = [];
+    if (item.text) {
+      var ph = figma.createText();
+      ph.characters = item.text;
+      ph.fontSize = item.fontSize || 14;
+      ph.fills = [{ type: "SOLID", color: { r: 0.65, g: 0.65, b: 0.68 } }];
+      inner.appendChild(ph);
+    }
+    frame.appendChild(inner);
+  } else if (type === "button") {
+    // Button: filled background with centered text
+    frame.layoutMode = "HORIZONTAL";
+    frame.primaryAxisAlignItems = "CENTER";
+    frame.counterAxisAlignItems = "CENTER";
+    frame.cornerRadius = item.cornerRadius || 8;
+    h = h || 44;
+    frame.resize(w, h);
+    var fillColor = { r: 0.42, g: 0.25, b: 0.57 };
+    if (item.fills && item.fills.length > 0) {
+      var c = hexToRgb(item.fills[0]);
+      if (c) fillColor = c;
+    }
+    frame.fills = [{ type: "SOLID", color: fillColor }];
+    if (item.text) {
+      var btn = figma.createText();
+      btn.characters = item.text;
+      btn.fontSize = item.fontSize || 15;
+      btn.fontWeight = 600;
+      btn.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+      frame.appendChild(btn);
+    }
+  } else if (type === "text") {
+    // Text label
+    frame.layoutMode = "HORIZONTAL";
+    frame.counterAxisAlignItems = "CENTER";
+    frame.fills = [];
+    frame.resize(w, figma.mixed);
+    if (item.text) {
+      var tn = figma.createText();
+      tn.characters = item.text;
+      tn.fontSize = item.fontSize || 14;
+      if (item.fills && item.fills.length > 0) {
+        var tc = hexToRgb(item.fills[0]);
+        if (tc) tn.fills = [{ type: "SOLID", color: tc }];
+      }
+      frame.appendChild(tn);
+    }
+  } else if (type === "divider") {
+    // Divider line
+    frame.fills = [{ type: "SOLID", color: { r: 0.9, g: 0.9, b: 0.92 } }];
+    h = h || 1;
+    frame.resize(w, h);
+  } else if (type === "image") {
+    // Image placeholder
+    frame.fills = [{ type: "SOLID", color: { r: 0.92, g: 0.92, b: 0.94 } }];
+    frame.cornerRadius = item.cornerRadius || 0;
+    h = h || 120;
+    frame.resize(w, h);
+    frame.layoutMode = "HORIZONTAL";
+    frame.primaryAxisAlignItems = "CENTER";
+    frame.counterAxisAlignItems = "CENTER";
+    var imgLabel = figma.createText();
+    imgLabel.characters = item.text || "Image";
+    imgLabel.fontSize = 11;
+    imgLabel.fills = [{ type: "SOLID", color: { r: 0.6, g: 0.6, b: 0.63 } }];
+    frame.appendChild(imgLabel);
+  } else if (type === "checkbox") {
+    // Checkbox with label
+    frame.layoutMode = "HORIZONTAL";
+    frame.primaryAxisAlignItems = "CENTER";
+    frame.counterAxisAlignItems = "CENTER";
+    frame.itemSpacing = 8;
+    frame.fills = [];
+    frame.resize(w, figma.mixed);
+    // Checkbox square
+    var box = figma.createFrame();
+    box.resize(16, 16);
+    box.cornerRadius = 3;
+    box.strokes = [{ type: "SOLID", color: { r: 0.7, g: 0.7, b: 0.73 } }];
+    box.strokeWeight = 1.5;
+    box.fills = [];
+    frame.appendChild(box);
+    if (item.text) {
+      var cbLabel = figma.createText();
+      cbLabel.characters = item.text;
+      cbLabel.fontSize = item.fontSize || 13;
+      frame.appendChild(cbLabel);
+    }
+  } else if (type === "card") {
+    // Card container
+    frame.layoutMode = "VERTICAL";
+    frame.itemSpacing = 8;
+    frame.paddingLeft = 16;
+    frame.paddingRight = 16;
+    frame.paddingTop = 16;
+    frame.paddingBottom = 16;
+    frame.cornerRadius = item.cornerRadius || 12;
+    frame.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+    frame.strokes = [{ type: "SOLID", color: { r: 0.9, g: 0.9, b: 0.92 } }];
+    frame.strokeWeight = 1;
+    h = h || 100;
+    frame.resize(w, h);
+    if (item.text) {
+      var cardText = figma.createText();
+      cardText.characters = item.text;
+      cardText.fontSize = item.fontSize || 14;
+      frame.appendChild(cardText);
+    }
+  } else {
+    // Generic fallback
+    frame.layoutMode = "HORIZONTAL";
+    frame.primaryAxisAlignItems = "CENTER";
+    frame.counterAxisAlignItems = "CENTER";
+    frame.paddingLeft = 12;
+    frame.paddingRight = 12;
+    frame.paddingTop = 8;
+    frame.paddingBottom = 8;
+    frame.cornerRadius = item.cornerRadius || 0;
+    if (item.fills && item.fills.length > 0) {
+      var c2 = hexToRgb(item.fills[0]);
+      if (c2) frame.fills = [{ type: "SOLID", color: c2 }];
+    }
+    if (item.text) {
+      var tn2 = figma.createText();
+      tn2.characters = item.text;
+      tn2.fontSize = item.fontSize || 14;
+      frame.appendChild(tn2);
+    }
+    if (h) frame.resize(w, h);
   }
-  if (item.text) {
-    var tn = figma.createText();
-    tn.characters = item.text;
-    tn.fontSize = item.fontSize || 14;
-    frame.appendChild(tn);
-  }
-  if (item.width) frame.resize(item.width, frame.height);
+
   return frame;
 }
 

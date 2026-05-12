@@ -529,7 +529,16 @@ function renderModels(models, provider) {
 
   sel.innerHTML = '';
 
-  // Sort: vision models first, then by name
+  // Sort: vision models first, newest first (higher date suffix = newer)
+  models.sort(function(a, b) {
+    if (a.vision && !b.vision) return -1;
+    if (!a.vision && b.vision) return 1;
+    // Sort by date suffix in ID (e.g. 260215 > 250615)
+    var da = parseInt((a.id.match(/\d{6}$/) || ['0'])[0]) || 0;
+    var db = parseInt((b.id.match(/\d{6}$/) || ['0'])[0]) || 0;
+    return db - da;
+  });
+
   var vision = [], text = [];
   for (var i = 0; i < models.length; i++) {
     if (models[i].vision) vision.push(models[i]);
@@ -722,73 +731,68 @@ document.getElementById('btn-generate').addEventListener('click', function () {
 // ==================== AI API CALLS ====================
 function buildPrompt(ds) {
   var lines = [
-    'You are a UI design assistant. Analyze the attached screenshot and map each UI element to the closest matching component from the design system catalog below.',
+    'You are a UI design expert. Carefully analyze the attached screenshot and recreate it as structured UI elements.',
     '',
-    '## Design System Components',
+    'IMPORTANT RULES:',
+    '- Identify EVERY visible UI element: inputs, buttons, text labels, images, checkboxes, icons, dividers, cards',
+    '- For input fields: set type="input", include placeholder text, estimate width/height, add cornerRadius',
+    '- For buttons: set type="button", include exact text, capture background color, add cornerRadius',
+    '- For text: set type="text", extract exact text content, capture font size and color',
+    '- Estimate realistic pixel values for width, height, fontSize, cornerRadius from the screenshot proportions',
+    '- If the screenshot shows a mobile screen (375px wide), scale accordingly',
+    '- If the screenshot shows a desktop layout, use appropriate widths',
   ];
-  if (ds.componentSets && ds.componentSets.length > 0) {
-    lines.push('### Component Sets (preferred, use componentSetId):');
+
+  if (ds && ds.componentSets && ds.componentSets.length > 0) {
+    lines.push('');
+    lines.push('## Design System Component Sets (prefer matching these):');
     for (var i = 0; i < ds.componentSets.length; i++) {
       var cs = ds.componentSets[i];
       var props = [];
       for (var pk in cs.variantProperties) { props.push(pk + ': [' + cs.variantProperties[pk].join('/') + ']'); }
-      lines.push((i + 1) + '. "' + cs.name + '" (id: ' + cs.id + ', ' + cs.childCount + ' variants, ' + props.join(', ') + ')');
+      lines.push((i + 1) + '. "' + cs.name + '" (componentSetId: ' + cs.id + ', variants: ' + props.join(', ') + ')');
     }
   }
-  if (ds.components && ds.components.length > 0) {
-    lines.push('### Individual Components:');
+  if (ds && ds.components && ds.components.length > 0) {
+    lines.push('');
+    lines.push('## Individual Components:');
     var shown = Math.min(ds.components.length, 50);
     for (var j = 0; j < shown; j++) {
       var c = ds.components[j];
-      var info = '"' + c.name + '" (id: ' + c.id;
-      if (c.fills.length) info += ', fills: ' + c.fills.join('/');
+      var info = '"' + c.name + '" (componentId: ' + c.id;
+      if (c.fills.length) info += ', color: ' + c.fills.join('/');
       if (c.cornerRadius !== null) info += ', radius: ' + c.cornerRadius;
-      info += ', ' + c.width + 'x' + c.height + ')';
+      info += ', size: ' + c.width + 'x' + c.height + ')';
       lines.push((j + 1) + '. ' + info);
     }
-    if (ds.components.length > 50) lines.push('... and ' + (ds.components.length - 50) + ' more');
   }
-  if (ds.paintStyles && ds.paintStyles.length > 0) {
-    lines.push('### Color Styles:');
-    for (var k = 0; k < Math.min(ds.paintStyles.length, 30); k++) {
-      lines.push('- "' + ds.paintStyles[k].name + '": ' + ds.paintStyles[k].hex);
-    }
-  }
-  if (ds.textStyles && ds.textStyles.length > 0) {
-    lines.push('### Text Styles:');
-    for (var m = 0; m < Math.min(ds.textStyles.length, 20); m++) {
-      lines.push('- "' + ds.textStyles[m].name + '": ' + ds.textStyles[m].fontSize + 'px ' + ds.textStyles[m].fontFamily);
-    }
-  }
+
   lines.push('');
   lines.push('## Output Format');
-  lines.push('Return ONLY valid JSON (no markdown, no explanation):');
+  lines.push('Return ONLY valid JSON (no markdown fences, no explanation):');
   lines.push('{');
   lines.push('  "layout": { "direction": "vertical"|"horizontal", "gap": <number>, "padding": <number> },');
   lines.push('  "items": [');
   lines.push('    {');
-  lines.push('      "type": "button"|"input"|"text"|"image"|"checkbox"|"icon"|"card"|"divider"|"other",');
-  lines.push('      "label": "<description>",');
-  lines.push('      "text": "<extracted text content>",');
-  lines.push('      "matchType": "componentSet"|"component"|"style"|"fallback",');
-  lines.push('      "componentSetId": "<id if matchType=componentSet>",');
-  lines.push('      "componentId": "<id if matchType=component>",');
+  lines.push('      "type": "input"|"button"|"text"|"image"|"checkbox"|"icon"|"card"|"divider"|"other",');
+  lines.push('      "label": "<element description>",');
+  lines.push('      "text": "<exact text or placeholder>",');
+  lines.push('      "matchType": "componentSet"|"component"|"fallback",');
+  lines.push('      "componentSetId": "<id if matched>",');
+  lines.push('      "componentId": "<id if matched>",');
   lines.push('      "variantOverrides": { "<prop>": "<value>" },');
   lines.push('      "fills": ["#HEX"],');
-  lines.push('      "width": <number|null>,');
-  lines.push('      "height": <number|null>,');
-  lines.push('      "cornerRadius": <number|null>,');
-  lines.push('      "fontSize": <number|null>');
+  lines.push('      "width": <pixels>,');
+  lines.push('      "height": <pixels>,');
+  lines.push('      "cornerRadius": <pixels>,');
+  lines.push('      "fontSize": <pixels>');
   lines.push('    }');
   lines.push('  ]');
   lines.push('}');
   lines.push('');
-  lines.push('Rules:');
-  lines.push('- Always prefer componentSet match over component match');
-  lines.push('- If no component matches, use "fallback" as matchType');
-  lines.push('- Preserve original text content from screenshot');
-  lines.push('- Estimate layout gap and padding from screenshot spacing');
-  lines.push('- Order items top-to-bottom (or left-to-right for horizontal layouts)');
+  lines.push('CRITICAL: width/height MUST be realistic pixel values (e.g. input: 311x44, button: 311x44, title text width: 311).');
+  lines.push('CRITICAL: Every element must have type correctly set. Input fields are type="input", NOT type="text".');
+  lines.push('CRITICAL: If no design system component matches, use matchType="fallback" - the plugin will generate proper UI elements.');
   return lines.join('\n');
 }
 
