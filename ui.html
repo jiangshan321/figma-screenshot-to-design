@@ -621,7 +621,7 @@ document.getElementById('btn-test-conn').addEventListener('click', async functio
   showTestResult('info', 'Testing connection to ' + cfg.modelId + '...');
 
   try {
-    await callAI(cfg, null, 'Respond with exactly one word: OK');
+    await testAICall(cfg);
     showTestResult('ok', '\u2705 Connection successful! Model: ' + cfg.modelId);
     addLog('API test passed: ' + cfg.provider + ' / ' + cfg.modelId, 'success');
 
@@ -816,6 +816,54 @@ async function callAI(config, imageBase64, dsOrPrompt) {
   } else {
     return await callOpenAICompatible(endpoint, config.apiKey, model, prompt, imageBase64);
   }
+}
+
+// Test connection - just verify API responds, don't parse JSON
+async function testAICall(config) {
+  var provider = config.provider;
+  var pCfg = PROVIDERS[provider];
+  var endpoint = config.endpoint || getEndpointForProvider(provider, config.modelId);
+  var model = config.modelId;
+  var prompt = 'Hi, reply with OK.';
+
+  if (pCfg.format === 'anthropic') {
+    var body = { model: model, max_tokens: 64, messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }] };
+    var resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': config.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify(body)
+    });
+    var data = await resp.json();
+    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+    if (!data.content || !data.content[0]) throw new Error('Empty response');
+    return;
+  }
+
+  if (pCfg.format === 'gemini') {
+    var sep = endpoint.indexOf('?') >= 0 ? '&' : '?';
+    var url = endpoint + sep + 'key=' + config.apiKey;
+    var body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 64 } };
+    var resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await resp.json();
+    if (data.error) throw new Error(JSON.stringify(data.error));
+    return;
+  }
+
+  // OpenAI-compatible
+  var body = { model: model, max_tokens: 64, messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }] };
+  var resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+  if (!data.choices || !data.choices[0]) throw new Error('Empty response');
+  return;
 }
 
 async function callAnthropic(endpoint, apiKey, model, prompt, imageBase64) {
