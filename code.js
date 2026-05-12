@@ -339,36 +339,68 @@ async function generatePage(elements) {
   var layout = elements.layout || {};
   var root = figma.createFrame();
   root.name = "Generated Layout";
-  root.layoutMode = layout.direction === "horizontal" ? "HORIZONTAL" : "VERTICAL";
+
+  // Enforce Auto Layout on root
+  root.layoutMode = "VERTICAL";
+  root.primaryAxisAlignItems = "MIN";
+  root.counterAxisAlignItems = "MIN";
   root.itemSpacing = layout.gap || 12;
   var pad = layout.padding || 24;
   root.paddingLeft = pad;
   root.paddingRight = pad;
   root.paddingTop = pad;
   root.paddingBottom = pad;
-  root.primaryAxisAlignItems = "MIN";
-  root.counterAxisAlignItems = "MIN";
-  // Try to detect background color from layout
+  root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
   if (layout.background) {
     var bgc = hexToRgb(layout.background);
     if (bgc) root.fills = [{ type: "SOLID", color: bgc }];
-    else root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-  } else {
-    root.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
   }
-  // Auto-size width to content
-  root.counterAxisSizingMode = "AUTO";
+  // Fixed width if specified (e.g. 375 for mobile)
   if (layout.width && layout.width > 0) {
     root.counterAxisSizingMode = "FIXED";
-    root.resize(layout.width, root.height);
+    root.resize(layout.width, 1);
+  } else {
+    root.counterAxisSizingMode = "AUTO";
   }
   page.appendChild(root);
 
+  // Helper: create Auto Layout wrapper for each element
+  function wrapInAutoLayout(node, item) {
+    // If the node already has Auto Layout, return as-is
+    if (node.layoutMode !== "NONE") return node;
+
+    // Wrap in a vertical Auto Layout frame
+    var wrapper = figma.createFrame();
+    wrapper.name = (item.label || item.type || "Section") + " Wrapper";
+    wrapper.layoutMode = "VERTICAL";
+    wrapper.primaryAxisAlignItems = "MIN";
+    wrapper.counterAxisAlignItems = "STRETCH";
+    wrapper.counterAxisSizingMode = "FIXED";
+    wrapper.fills = [];
+    wrapper.resize(root.width > 1 ? root.width - pad * 2 : 327, 1);
+    wrapper.appendChild(node);
+    return wrapper;
+  }
+
+  var count = 0;
   for (var i = 0; i < elements.items.length; i++) {
     var item = elements.items[i];
     var node = null;
 
-    if (item.matchType === "component" && item.componentId) {
+    // ALWAYS try component match first
+    if (item.componentSetId) {
+      try {
+        var csNode = figma.getNodeById(item.componentSetId);
+        if (csNode && csNode.type === "COMPONENT_SET") {
+          var matchComp = findMatchingVariant(csNode, item.variantOverrides || {});
+          if (matchComp) {
+            node = matchComp.createInstance();
+            if (item.text) await setText(node, item.text);
+          }
+        }
+      } catch (e) {}
+    }
+    if (!node && item.componentId) {
       try {
         var compNode = figma.getNodeById(item.componentId);
         if (compNode) {
@@ -380,35 +412,105 @@ async function generatePage(elements) {
             }
           }
         }
-      } catch (e) { node = await createFallback(item); }
-    } else if (item.matchType === "componentSet" && item.componentSetId) {
-      try {
-        var csNode = figma.getNodeById(item.componentSetId);
-        if (csNode && csNode.type === "COMPONENT_SET") {
-          var matchComp = findMatchingVariant(csNode, item.variantOverrides || {});
-          if (matchComp) {
-            node = matchComp.createInstance();
-            if (item.text) await setText(node, item.text);
-          }
-        }
-      } catch (e) { node = await createFallback(item); }
-    } else {
-      node = await createFallback(item);
+      } catch (e) {}
+    }
+
+    // Smart fallback: try to find ANY matching component by type keywords
+    if (!node && designSystemCache) {
+      node = await findBestComponentMatch(item);
+    }
+
+    // Last resort: minimal fallback
+    if (!node) {
+      node = await createMinimalFallback(item);
     }
 
     if (node) {
+      // Apply width override
       if (item.width && item.width > 0) {
-        var rw = item.width;
-        var rh = (item.height && item.height > 0) ? item.height : node.height;
-        try { node.resize(rw, rh); } catch (e) {}
+        try { node.resize(item.width, item.height || node.height); } catch (e) {}
       }
       root.appendChild(node);
+      count++;
     }
   }
 
   figma.currentPage = page;
   figma.viewport.scrollAndZoomIntoView([root]);
-  return { success: true, pageCount: elements.items.length, pageName: page.name };
+  return { success: true, pageCount: count, pageName: page.name };
+}
+
+// Cache design system data for smart matching
+var designSystemCache = null;
+
+// Find best matching component by type keywords in component names
+async function findBestComponentMatch(item) {
+  if (!designSystemCache) return null;
+  var type = (item.type || "").toLowerCase();
+  var label = (item.label || "").toLowerCase();
+
+  // Keywords to match against component names
+  var keywords = [];
+  if (type === "input" || type === "field" || label.indexOf("input") >= 0 || label.indexOf("field") >= 0) {
+    keywords = ["input", "field", "textfield", "text-field", "form"];
+  } else if (type === "button" || label.indexOf("button") >= 0) {
+    keywords = ["button", "btn", "cta"];
+  } else if (type === "checkbox" || label.indexOf("checkbox") >= 0 || label.indexOf("check") >= 0) {
+    keywords = ["checkbox", "check"];
+  } else if (type === "card" || label.indexOf("card") >= 0) {
+    keywords = ["card"];
+  }
+
+  if (keywords.length === 0) return null;
+
+  // Search component sets first (preferred)
+  var allComps = (designSystemCache.componentSets || []).concat(designSystemCache.components || []);
+  for (var i = 0; i < allComps.length; i++) {
+    var comp = allComps[i];
+    var name = (comp.name || "").toLowerCase();
+    for (var k = 0; k < keywords.length; k++) {
+      if (name.indexOf(keywords[k]) >= 0) {
+        try {
+          var compNode = figma.getNodeById(comp.id);
+          if (compNode) {
+            if (compNode.type === "COMPONENT_SET") {
+              var first = compNode.children.length > 0 ? compNode.children[0] : null;
+              if (first) {
+                var inst = first.createInstance();
+                if (item.text) await setText(inst, item.text);
+                return inst;
+              }
+            } else {
+              var inst2 = compNode.createInstance();
+              if (item.text) await setText(inst2, item.text);
+              return inst2;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  return null;
+}
+
+// Minimal fallback - just a plain text label
+async function createMinimalFallback(item) {
+  var frame = figma.createFrame();
+  frame.name = "[unmatched] " + (item.label || item.type || "element");
+  frame.layoutMode = "HORIZONTAL";
+  frame.counterAxisAlignItems = "CENTER";
+  frame.fills = [];
+  frame.counterAxisSizingMode = "AUTO";
+  frame.resize(327, 1);
+  if (item.text) {
+    var t = figma.createText();
+    await loadFont(t);
+    t.characters = item.text;
+    t.fontSize = item.fontSize || 14;
+    t.fills = [{ type: "SOLID", color: { r: 0.8, g: 0.3, b: 0.3 } }]; // red = unmatched
+    frame.appendChild(t);
+  }
+  return frame;
 }
 
 function findMatchingVariant(cs, overrides) {
@@ -579,6 +681,7 @@ figma.ui.onmessage = async function (msg) {
   if (msg.type === "scan-design-system") {
     figma.ui.postMessage({ type: "scan-progress", progress: 50, message: "Scanning components and styles..." });
     var ds = scanDesignSystem();
+    designSystemCache = ds;
     figma.ui.postMessage({ type: "scan-result", data: ds });
   }
 
@@ -595,6 +698,8 @@ figma.ui.onmessage = async function (msg) {
 
   if (msg.type === "generate-page") {
     try {
+      // Use cached design system data if available
+      if (msg.designSystem) designSystemCache = msg.designSystem;
       var result = await generatePage(msg.elements);
       figma.ui.postMessage({ type: "generate-result", success: true, data: result });
       figma.notify("Generated: " + result.pageCount + " elements");

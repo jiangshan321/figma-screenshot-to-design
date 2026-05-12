@@ -120,6 +120,14 @@ details[open] summary{color:var(--accent2);margin-bottom:8px}
     </div>
     <input type="file" id="file-input" accept="image/*" style="display:none">
   </div>
+
+  <!-- Text Instructions -->
+  <div class="section">
+    <div class="section-title">&#128172; Instructions (optional)</div>
+    <textarea id="text-instructions" rows="3" placeholder="e.g. Use all components from the design system, replace the search bar with a button, add a divider between sections..." style="resize:vertical;min-height:50px"></textarea>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">Text instructions override screenshot content when conflicting.</div>
+  </div>
+
   <div class="section" id="log-section" style="display:none">
     <div class="section-title">&#128220; Analysis Log</div>
     <div class="log" id="log"></div>
@@ -747,11 +755,13 @@ document.getElementById('btn-analyze').addEventListener('click', async function 
 document.getElementById('btn-generate').addEventListener('click', function () {
   if (!analysisResult) return;
   setAction('Generating...', 'loading');
-  parent.postMessage({ pluginMessage: { type: 'generate-page', elements: analysisResult } }, '*');
+  parent.postMessage({ pluginMessage: { type: 'generate-page', elements: analysisResult, designSystem: designSystemData } }, '*');
 });
 
 // ==================== AI API CALLS ====================
 function buildPrompt(ds) {
+  var userInstructions = document.getElementById('text-instructions').value.trim();
+
   var lines = [
     'You are a UI builder. You MUST use ONLY the components listed below to recreate the screenshot. You CANNOT invent or create new elements.',
     '',
@@ -765,8 +775,16 @@ function buildPrompt(ds) {
     '7. Use variantOverrides to pick the right variant (e.g. State=Default, Size=Large)',
     '8. Override text content with the "text" field to match screenshot text',
     '9. Order items top-to-bottom as they appear in the screenshot',
-    '',
   ];
+
+  // User text instructions = HIGHEST PRIORITY
+  if (userInstructions) {
+    lines.push('');
+    lines.push('## USER INSTRUCTIONS (HIGHEST PRIORITY - OVERRIDE EVERYTHING ABOVE)');
+    lines.push(userInstructions);
+  }
+
+  lines.push('');
 
   if (ds && ds.componentSets && ds.componentSets.length > 0) {
     lines.push('## Component Sets (PREFER THESE):');
