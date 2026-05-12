@@ -442,40 +442,34 @@ async function fetchModels() {
 
   var btn = document.getElementById('btn-fetch');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Fetching...';
-  showTestResult('info', 'Connecting to ' + PROVIDERS[provider].name + '...');
+  btn.innerHTML = '<span class="spinner"></span>Loading...';
 
-  try {
-    var models = await doFetchModels(provider, apiKey);
-    allModels = models;
-    renderModels(models, provider);
-
+  // Use preset models directly (GET fetch blocked by CORS in Figma iframe)
+  var fallback = FALLBACK_MODELS[provider] || [];
+  if (fallback.length > 0) {
+    allModels = fallback;
+    renderModels(fallback, provider);
     var visionCount = 0;
-    for (var i = 0; i < models.length; i++) { if (models[i].vision) visionCount++; }
-    showTestResult('ok', '\u2705 Found ' + models.length + ' models (' + visionCount + ' with Vision)');
-    addLog('Fetched ' + models.length + ' models from ' + PROVIDERS[provider].name, 'success');
-    autoSaveConfig(); // Auto-save after fetching models
-  } catch (e) {
-    // Show the real error
-    showTestResult('err', '\u274c Model fetch failed: ' + e.message);
-    addLog('Model fetch failed: ' + e.message, 'error');
-
-    // Try fallback presets
-    var fallback = FALLBACK_MODELS[provider] || [];
-    if (fallback.length > 0) {
-      allModels = fallback;
-      renderModels(fallback, provider);
-      addLog('Using preset models (may not be activated on your account)', '');
+    for (var i = 0; i < fallback.length; i++) { if (fallback[i].vision) visionCount++; }
+    showTestResult('ok', '\u2705 ' + fallback.length + ' models loaded (' + visionCount + ' Vision)');
+    addLog('Loaded ' + fallback.length + ' preset models for ' + PROVIDERS[provider].name, 'success');
+    autoSaveConfig();
+  } else {
+    // No presets for this provider - try API fetch
+    try {
+      var models = await doFetchModels(provider, apiKey);
+      allModels = models;
+      renderModels(models, provider);
+      showTestResult('ok', '\u2705 Found ' + models.length + ' models');
       autoSaveConfig();
+    } catch (e) {
+      showTestResult('err', '\u274c No preset models. Fetch also failed: ' + e.message);
+      document.getElementById('advanced-section').open = true;
     }
-
-    // Auto-open Advanced Settings so user can manually enter their model
-    document.getElementById('advanced-section').open = true;
-    document.getElementById('model-info').textContent = 'Fetch failed. Please manually enter your Model ID below (Advanced Settings).';
   }
 
   btn.disabled = false;
-  btn.textContent = '\u128269 Fetch Available Models';
+  btn.textContent = '\u{1F50D} Load Models';
 }
 
 async function doFetchModels(provider, apiKey) {
