@@ -384,7 +384,11 @@ async function generatePage(elements) {
     }
 
     if (node) {
-      if (item.width) node.resize(item.width, item.height || node.height);
+      if (item.width && item.width > 0) {
+        var rw = item.width;
+        var rh = (item.height && item.height > 0) ? item.height : node.height;
+        try { node.resize(rw, rh); } catch (e) {}
+      }
       root.appendChild(node);
     }
   }
@@ -467,11 +471,12 @@ function createFallback(item) {
       frame.appendChild(btn);
     }
   } else if (type === "text") {
-    // Text label
+    // Text label - auto height
     frame.layoutMode = "HORIZONTAL";
     frame.counterAxisAlignItems = "CENTER";
     frame.fills = [];
-    frame.resize(w, figma.mixed);
+    frame.counterAxisSizingMode = "AUTO";
+    frame.resize(w, 20);
     if (item.text) {
       var tn = figma.createText();
       tn.characters = item.text;
@@ -508,7 +513,8 @@ function createFallback(item) {
     frame.counterAxisAlignItems = "CENTER";
     frame.itemSpacing = 8;
     frame.fills = [];
-    frame.resize(w, figma.mixed);
+    frame.counterAxisSizingMode = "AUTO";
+    frame.resize(w, 20);
     // Checkbox square
     var box = figma.createFrame();
     box.resize(16, 16);
